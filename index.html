@@ -1,0 +1,1562 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Laporan Kerosakan PPSM</title>
+    <script>
+        // =========================================================================
+        // TETAPAN GOOGLE SHEETS (TAMPAL URL /exec ANDA DI SINI SEBELUM KE GITHUB)
+        // Contoh: const DEFAULT_SHEET_URL = 'https://script.google.com/macros/s/AKfycb.../exec';
+        // =========================================================================
+        const DEFAULT_SHEET_URL = 'https://script.google.com/macros/s/AKfycbzImrBev7Tc1pkS8o6cSI1NnyhVXMNXZREjWUUaOhkeditTxBeX6XWenVsDU_TY2fxYhg/exec';
+    </script>
+    <!-- Muat turun fon Inter dari Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Muat turun Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Konfigurasi tema korporat PPSM dan fon Inter
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        ppsm: {
+                            50: '#f5f3ff',
+                            100: '#ede9fe',
+                            200: '#ddd6fe',
+                            300: '#c4b5fd',
+                            400: '#a78bfa',
+                            500: '#8b5cf6',
+                            600: '#7c3aed',
+                            700: '#6d28d9',
+                            800: '#5b21b6',
+                            900: '#4c1d95',
+                            950: '#2e1065',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Gaya cetakan yang kemas supaya hanya senarai laporan & statistik dicetak */
+        @media print {
+            body {
+                background: #ffffff !important;
+                color: #0f172a !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .print-full-width {
+                grid-column: 1 / -1 !important;
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+            .print-card {
+                break-inside: avoid;
+                page-break-inside: avoid;
+                box-shadow: none !important;
+                border: 1px solid #cbd5e1 !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen flex flex-col selection:bg-ppsm-200 selection:text-ppsm-900">
+
+    <!-- ==================== PENGEPALA UTAMA (HEADER) ==================== -->
+    <header class="bg-gradient-to-r from-ppsm-950 via-ppsm-900 to-indigo-900 text-white shadow-lg print:bg-none print:text-slate-900 print:shadow-none print:border-b print:border-slate-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-5">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <!-- Logo & Tajuk -->
+                <div class="flex items-center gap-3.5">
+                    <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-white/15 backdrop-blur-sm border border-white/20 flex items-center justify-center shrink-0 shadow-inner no-print">
+                        <svg class="w-6 h-6 sm:w-7 sm:h-7 text-purple-200" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437l1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-white print:text-slate-900">
+                            Sistem Laporan Kerosakan PPSM
+                        </h1>
+                        <p class="text-xs sm:text-sm text-purple-200/90 mt-0.5 print:text-slate-600">
+                            Portal Aduan, Penyelenggaraan Fasiliti &amp; Integrasi Google Sheets
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ==================== KANDUNGAN UTAMA (2 LAJUR RESPONSIF) ==================== -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+
+            <!-- ==================== LAJUR KIRI: BORANG LAPORAN KEROSAKAN ==================== -->
+            <section class="lg:col-span-5 lg:sticky lg:top-6 no-print">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+                    <!-- Pengepala Borang -->
+                    <div class="bg-gradient-to-r from-ppsm-50 to-indigo-50/70 px-5 sm:px-6 py-4 border-b border-slate-200/80">
+                        <h2 class="text-base sm:text-lg font-bold text-ppsm-950 flex items-center gap-2.5">
+                            <span class="w-8 h-8 rounded-lg bg-ppsm-800 text-white inline-flex items-center justify-center shrink-0">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                </svg>
+                            </span>
+                            Borang Laporan Kerosakan
+                        </h2>
+                        <p class="text-xs sm:text-sm text-slate-600 mt-1">
+                            Lengkapkan maklumat kerosakan di bawah untuk tindakan segera.
+                        </p>
+                    </div>
+
+                    <!-- Borang -->
+                    <form id="damageReportForm" class="p-5 sm:p-6 space-y-4" novalidate>
+                        <!-- Nama Pelapor (Wajib) -->
+                        <div>
+                            <label for="reporterName" class="block text-sm font-semibold text-slate-700 mb-1.5">
+                                Nama Pelapor <span class="text-rose-600">*</span>
+                            </label>
+                            <div class="relative">
+                                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                    </svg>
+                                </div>
+                                <input type="text" id="reporterName" name="reporterName" required
+                                    placeholder="Contoh: Ahmad bin Abdullah"
+                                    class="w-full rounded-xl border border-slate-300 bg-white pl-10 pr-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-ppsm-600 focus:ring-2 focus:ring-ppsm-500/20 outline-none transition">
+                            </div>
+                            <p id="errorReporterName" class="hidden text-xs text-rose-600 mt-1 font-medium">Sila masukkan nama pelapor.</p>
+                        </div>
+
+                        <!-- Tarikh & Masa (DD/MM/YYYY, HH:MM:SS) -->
+                        <div>
+                            <label for="autoDateTime" class="block text-sm font-semibold text-slate-700 mb-1.5">
+                                Tarikh &amp; Masa
+                            </label>
+                            <div class="relative">
+                                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-ppsm-600">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                </div>
+                                <input type="text" id="autoDateTime" name="autoDateTime" readonly
+                                    class="w-full rounded-xl border border-ppsm-200 bg-ppsm-50/60 pl-10 pr-4 py-2.5 text-sm font-mono font-semibold text-ppsm-900 cursor-not-allowed outline-none">
+                            </div>
+                        </div>
+
+                        <!-- Kategori Kerosakan (Wajib) -->
+                        <div>
+                            <label for="categoryInput" class="block text-sm font-semibold text-slate-700 mb-1.5">
+                                Kategori Kerosakan <span class="text-rose-600">*</span>
+                            </label>
+                            <div class="relative">
+                                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                                    </svg>
+                                </div>
+                                <select id="categoryInput" name="categoryInput" required
+                                    class="w-full rounded-xl border border-slate-300 bg-white pl-10 pr-8 py-2.5 text-sm text-slate-900 focus:border-ppsm-600 focus:ring-2 focus:ring-ppsm-500/20 outline-none transition">
+                                    <option value="">-- Pilih Kategori Kerosakan --</option>
+                                    <option value="Elektrik & Lampu">Elektrik &amp; Lampu</option>
+                                    <option value="Penghawa Dingin">Penghawa Dingin</option>
+                                    <option value="Perabot & Kelengkapan">Perabot &amp; Kelengkapan</option>
+                                    <option value="Paip & Sanitari">Paip &amp; Sanitari</option>
+                                    <option value="Bangunan & Awam">Bangunan &amp; Awam</option>
+                                    <option value="Lain-lain">Lain-lain</option>
+                                </select>
+                            </div>
+                            <p id="errorCategory" class="hidden text-xs text-rose-600 mt-1 font-medium">Sila pilih kategori kerosakan.</p>
+                        </div>
+
+                        <!-- Lokasi / Bilik (Pilihan) -->
+                        <div>
+                            <label for="locationInput" class="block text-sm font-semibold text-slate-700 mb-1.5">
+                                Lokasi / Bilik <span class="text-xs font-normal text-slate-400">(Pilihan)</span>
+                            </label>
+                            <div class="relative">
+                                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    </svg>
+                                </div>
+                                <input type="text" id="locationInput" name="locationInput"
+                                    placeholder="Contoh: Pejabat Am, Bilik Mesyuarat, Makmal"
+                                    class="w-full rounded-xl border border-slate-300 bg-white pl-10 pr-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-ppsm-600 focus:ring-2 focus:ring-ppsm-500/20 outline-none transition">
+                            </div>
+                        </div>
+
+                        <!-- Laporan Kerosakan (Wajib) -->
+                        <div>
+                            <label for="damageDescription" class="block text-sm font-semibold text-slate-700 mb-1.5">
+                                Laporan Kerosakan <span class="text-rose-600">*</span>
+                            </label>
+                            <textarea id="damageDescription" name="damageDescription" rows="3" required
+                                placeholder="Nyatakan perincian kerosakan yang berlaku..."
+                                class="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-ppsm-600 focus:ring-2 focus:ring-ppsm-500/20 outline-none transition resize-y"></textarea>
+                            <p id="errorDescription" class="hidden text-xs text-rose-600 mt-1 font-medium">Sila masukkan penerangan kerosakan.</p>
+                        </div>
+
+                        <!-- Muat Naik Gambar (Seret & Lepas / Klik) -->
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700 mb-1.5">
+                                Muat Naik Gambar <span class="text-xs font-normal text-slate-400">(Pilihan)</span>
+                            </label>
+
+                            <input type="file" id="imageInput" accept="image/*" class="hidden">
+
+                            <!-- Zon Seret & Lepas -->
+                            <div id="dropZone"
+                                class="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50/70 px-4 py-6 text-center cursor-pointer transition-all duration-200 hover:border-ppsm-500 hover:bg-ppsm-50/40">
+                                <div class="w-10 h-10 rounded-xl bg-ppsm-100 text-ppsm-700 flex items-center justify-center mb-2">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                    </svg>
+                                </div>
+                                <p class="text-xs sm:text-sm font-semibold text-slate-700">
+                                    Klik pilih gambar atau seret &amp; lepas di sini
+                                </p>
+                                <p class="text-xs text-slate-500 mt-0.5">
+                                    Auto-mampat (maks. 800px, JPEG 70%)
+                                </p>
+                            </div>
+
+                            <!-- Pratonton Gambar -->
+                            <div id="imagePreviewContainer" class="hidden mt-2 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-20 h-20 rounded-xl overflow-hidden bg-slate-200 shrink-0 border border-slate-200">
+                                        <img id="imagePreview" src="" alt="Pratonton gambar kerosakan" class="w-full h-full object-cover">
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <p id="imageFileName" class="text-xs font-semibold text-slate-800 truncate">gambar.jpg</p>
+                                        <p id="imageFileInfo" class="text-xs text-slate-500 mt-0.5">Sedia dihantar</p>
+                                        <div class="flex items-center gap-2 mt-2">
+                                            <button type="button" id="changeImageBtn"
+                                                class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 transition">
+                                                Tukar
+                                            </button>
+                                            <button type="button" id="removeImageBtn"
+                                                class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-rose-50 border border-rose-200 text-rose-700 hover:bg-rose-100 transition">
+                                                Buang
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Butang Hantar & Set Semula -->
+                        <div class="pt-3 flex items-center gap-2.5 border-t border-slate-100">
+                            <button type="button" id="resetFormBtn"
+                                class="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition">
+                                Set Semula
+                            </button>
+                            <button type="submit" id="submitBtn"
+                                class="flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-ppsm-800 to-indigo-700 hover:from-ppsm-900 hover:to-indigo-800 shadow-md shadow-ppsm-900/20 focus:ring-2 focus:ring-ppsm-500 focus:ring-offset-2 transition-all active:scale-[0.99] disabled:opacity-70 disabled:cursor-not-allowed">
+                                <svg id="submitIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+                                </svg>
+                                <svg id="submitSpinner" class="hidden animate-spin w-4 h-4 text-white" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <span id="submitBtnText">Hantar Laporan</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <!-- ==================== LAJUR KANAN: STATISTIK, PENAPIS & SENARAI LAPORAN ==================== -->
+            <section class="lg:col-span-7 space-y-5 print-full-width">
+
+                <!-- 4 Kad Ringkasan Statistik -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <button type="button" onclick="quickFilterStatus('Semua')"
+                        class="text-left bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm hover:border-ppsm-300 transition group print-card">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-slate-500">Jumlah</span>
+                            <span class="w-8 h-8 rounded-xl bg-ppsm-100 text-ppsm-700 flex items-center justify-center group-hover:scale-105 transition no-print">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                            </span>
+                        </div>
+                        <p id="statTotal" class="text-2xl font-extrabold text-slate-900 mt-1.5">0</p>
+                    </button>
+
+                    <button type="button" onclick="quickFilterStatus('Baru')"
+                        class="text-left bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm hover:border-amber-300 transition group print-card">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-slate-500">Baru</span>
+                            <span class="w-8 h-8 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center group-hover:scale-105 transition no-print">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </span>
+                        </div>
+                        <p id="statBaru" class="text-2xl font-extrabold text-amber-600 mt-1.5">0</p>
+                    </button>
+
+                    <button type="button" onclick="quickFilterStatus('Dalam Tindakan')"
+                        class="text-left bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm hover:border-blue-300 transition group print-card">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-slate-500">Tindakan</span>
+                            <span class="w-8 h-8 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center group-hover:scale-105 transition no-print">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                                </svg>
+                            </span>
+                        </div>
+                        <p id="statTindakan" class="text-2xl font-extrabold text-blue-600 mt-1.5">0</p>
+                    </button>
+
+                    <button type="button" onclick="quickFilterStatus('Selesai')"
+                        class="text-left bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm hover:border-emerald-300 transition group print-card">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold text-slate-500">Selesai</span>
+                            <span class="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center group-hover:scale-105 transition no-print">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </span>
+                        </div>
+                        <p id="statSelesai" class="text-2xl font-extrabold text-emerald-600 mt-1.5">0</p>
+                    </button>
+                </div>
+
+                <!-- Bar Alat: Tindakan Utama, Carian & Penapis -->
+                <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm space-y-3 no-print">
+                    <!-- Baris 1: Tajuk Senarai & Butang Tindakan -->
+                    <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
+                        <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+                            <span>Rekod Laporan</span>
+                            <span id="filteredCountBadge" class="px-2 py-0.5 text-xs font-bold rounded-full bg-ppsm-100 text-ppsm-800">0</span>
+                        </h3>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <!-- Tarik dari Sheet -->
+                            <button type="button" id="pullSheetBtn" onclick="pullFromGoogleSheet()"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 transition disabled:opacity-60">
+                                <svg id="pullSheetIcon" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                                </svg>
+                                <span id="pullSheetText">Tarik dari Sheet</span>
+                            </button>
+                            <!-- Eksport CSV -->
+                            <button type="button" id="exportCsvBtn"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-ppsm-800 bg-ppsm-50 border border-ppsm-200 hover:bg-ppsm-100 transition">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                </svg>
+                                <span>Eksport CSV</span>
+                            </button>
+                            <!-- Cetak -->
+                            <button type="button" id="printBtn"
+                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 transition">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                                </svg>
+                                <span>Cetak</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Baris 2: Carian Pantas & 2 Penapis (Kategori + Status) -->
+                    <div class="grid grid-cols-1 sm:grid-cols-12 gap-2.5">
+                        <!-- Carian -->
+                        <div class="sm:col-span-5 relative">
+                            <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                                </svg>
+                            </div>
+                            <input type="text" id="searchInput"
+                                placeholder="Cari ID, nama, lokasi, kerosakan..."
+                                class="w-full rounded-xl border border-slate-300 bg-slate-50/50 pl-9 pr-3 py-2 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-ppsm-600 focus:ring-2 focus:ring-ppsm-500/20 outline-none transition">
+                        </div>
+
+                        <!-- Penapis Kategori -->
+                        <div class="sm:col-span-4">
+                            <select id="categoryFilter"
+                                class="w-full rounded-xl border border-slate-300 bg-slate-50/50 px-3 py-2 text-xs sm:text-sm font-medium text-slate-700 focus:bg-white focus:border-ppsm-600 focus:ring-2 focus:ring-ppsm-500/20 outline-none transition">
+                                <option value="Semua">Semua Kategori</option>
+                                <option value="Elektrik & Lampu">Elektrik &amp; Lampu</option>
+                                <option value="Penghawa Dingin">Penghawa Dingin</option>
+                                <option value="Perabot & Kelengkapan">Perabot &amp; Kelengkapan</option>
+                                <option value="Paip & Sanitari">Paip &amp; Sanitari</option>
+                                <option value="Bangunan & Awam">Bangunan &amp; Awam</option>
+                                <option value="Lain-lain">Lain-lain</option>
+                            </select>
+                        </div>
+
+                        <!-- Penapis Status -->
+                        <div class="sm:col-span-3">
+                            <select id="statusFilter"
+                                class="w-full rounded-xl border border-slate-300 bg-slate-50/50 px-3 py-2 text-xs sm:text-sm font-medium text-slate-700 focus:bg-white focus:border-ppsm-600 focus:ring-2 focus:ring-ppsm-500/20 outline-none transition">
+                                <option value="Semua">Semua Status</option>
+                                <option value="Baru">Baru</option>
+                                <option value="Dalam Tindakan">Dalam Tindakan</option>
+                                <option value="Selesai">Selesai</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Senarai Kad Laporan -->
+                <div id="reportsContainer" class="space-y-4">
+                    <!-- Kad dijana oleh JavaScript -->
+                </div>
+
+                <!-- Keadaan Kosong -->
+                <div id="emptyState" class="hidden bg-white rounded-2xl border border-dashed border-slate-300 p-10 text-center">
+                    <div class="w-14 h-14 rounded-2xl bg-ppsm-50 text-ppsm-400 flex items-center justify-center mx-auto mb-3">
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-sm sm:text-base font-bold text-slate-800">Tiada rekod laporan ditemui</h3>
+                    <p id="emptyStateSubtext" class="text-xs sm:text-sm text-slate-500 mt-1 max-w-md mx-auto">
+                        Belum ada laporan kerosakan direkodkan atau tiada padanan bagi penapis yang dipilih.
+                    </p>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- ==================== PENGAKI (FOOTER) ==================== -->
+    <footer class="mt-auto border-t border-slate-200 bg-white py-4 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
+            <p>&copy; <span id="footerYear">2026</span> Sistem Laporan Kerosakan PPSM. Hak cipta terpelihara.</p>
+            <p>Menyokong penyimpanan tempatan &amp; penyegerakan langsung ke Google Sheets.</p>
+        </div>
+    </footer>
+
+    <!-- ==================== MODAL PAPARAN GAMBAR BERSAIZ PENUH ==================== -->
+    <div id="imageModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4 no-print" role="dialog" aria-modal="true" aria-labelledby="imageModalTitle">
+        <div class="relative max-w-4xl w-full bg-white rounded-2xl overflow-hidden shadow-2xl">
+            <div class="flex items-center justify-between px-5 py-3.5 border-b border-slate-200 bg-slate-50">
+                <div class="min-w-0 pr-3">
+                    <h3 id="imageModalTitle" class="text-sm font-bold text-slate-900 truncate">Lampiran Gambar</h3>
+                    <p id="imageModalSubtitle" class="text-xs text-slate-500 truncate"></p>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <a id="modalDriveLink" href="#" target="_blank" rel="noopener noreferrer"
+                        class="hidden inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-ppsm-800 bg-ppsm-100 hover:bg-ppsm-200 transition">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                        </svg>
+                        Buka di Drive
+                    </a>
+                    <button type="button" onclick="closeImageModal()"
+                        class="p-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-200/70 transition" aria-label="Tutup">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div class="bg-slate-900 flex items-center justify-center max-h-[75vh] overflow-auto p-3">
+                <img id="modalFullImage" src="" alt="Gambar kerosakan bersaiz penuh" class="max-w-full max-h-[70vh] rounded-lg object-contain">
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL PENGESAHAN PADAM ==================== -->
+    <div id="deleteModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4 no-print" role="dialog" aria-modal="true" aria-labelledby="deleteModalTitle">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200">
+            <div class="flex items-start gap-4">
+                <div class="w-11 h-11 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                </div>
+                <div class="flex-1">
+                    <h3 id="deleteModalTitle" class="text-base font-bold text-slate-900">Padam Laporan Ini?</h3>
+                    <p id="deleteModalMessage" class="text-sm text-slate-600 mt-1">
+                        Adakah anda pasti mahu memadam laporan ini? Tindakan ini tidak boleh dibatalkan.
+                    </p>
+                </div>
+            </div>
+            <div class="mt-6 flex items-center justify-end gap-2.5">
+                <button type="button" onclick="closeDeleteModal()"
+                    class="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition">
+                    Batal
+                </button>
+                <button type="button" id="confirmDeleteBtn"
+                    class="px-4 py-2.5 rounded-xl text-sm font-semibold text-white bg-rose-600 hover:bg-rose-700 shadow-sm transition">
+                    Ya, Padam
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== NOTIFIKASI TOAST ==================== -->
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2.5 max-w-sm w-[calc(100%-2.5rem)] pointer-events-none no-print"></div>
+
+    <!-- ==================== SKRIP APLIKASI ==================== -->
+    <script>
+        /**
+         * Sistem Laporan Kerosakan PPSM (Versi Integrasi Google Sheets & Kategori)
+         * Menguruskan borang laporan, mampatan imej Canvas (800px, JPEG 0.7),
+         * penyimpanan localStorage, dan penyegerakan penuh dengan Google Apps Script.
+         */
+
+        const STORAGE_KEY = 'ppsm_damage_reports_v2';
+        const COUNTER_KEY = 'ppsm_damage_counter_v2';
+        const SHEET_URL_KEY = 'ppsm_google_sheet_url_v2';
+
+        // ==================== KEADAAN APLIKASI & RUJUKAN DOM ====================
+        let reports = [];
+        let googleSheetUrl = '';
+        let currentImageBase64 = null;
+        let pendingDeleteId = null;
+
+        // Borang Laporan
+        const formEl = document.getElementById('damageReportForm');
+        const reporterNameInput = document.getElementById('reporterName');
+        const errorReporterName = document.getElementById('errorReporterName');
+        const autoDateTimeInput = document.getElementById('autoDateTime');
+        const categoryInput = document.getElementById('categoryInput');
+        const errorCategory = document.getElementById('errorCategory');
+        const locationInput = document.getElementById('locationInput');
+        const descriptionInput = document.getElementById('damageDescription');
+        const errorDescription = document.getElementById('errorDescription');
+
+        // Muat Naik Gambar
+        const imageInput = document.getElementById('imageInput');
+        const dropZone = document.getElementById('dropZone');
+        const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+        const imagePreview = document.getElementById('imagePreview');
+        const imageFileName = document.getElementById('imageFileName');
+        const imageFileInfo = document.getElementById('imageFileInfo');
+        const changeImageBtn = document.getElementById('changeImageBtn');
+        const removeImageBtn = document.getElementById('removeImageBtn');
+
+        // Butang Borang
+        const resetFormBtn = document.getElementById('resetFormBtn');
+        const submitBtn = document.getElementById('submitBtn');
+        const submitIcon = document.getElementById('submitIcon');
+        const submitSpinner = document.getElementById('submitSpinner');
+        const submitBtnText = document.getElementById('submitBtnText');
+
+        // Statistik, Bar Alat & Senarai
+        const statTotal = document.getElementById('statTotal');
+        const statBaru = document.getElementById('statBaru');
+        const statTindakan = document.getElementById('statTindakan');
+        const statSelesai = document.getElementById('statSelesai');
+        const filteredCountBadge = document.getElementById('filteredCountBadge');
+        const pullSheetBtn = document.getElementById('pullSheetBtn');
+        const pullSheetIcon = document.getElementById('pullSheetIcon');
+        const pullSheetText = document.getElementById('pullSheetText');
+        const exportCsvBtn = document.getElementById('exportCsvBtn');
+        const printBtn = document.getElementById('printBtn');
+        const searchInput = document.getElementById('searchInput');
+        const categoryFilter = document.getElementById('categoryFilter');
+        const statusFilter = document.getElementById('statusFilter');
+        const reportsContainer = document.getElementById('reportsContainer');
+        const emptyState = document.getElementById('emptyState');
+        const emptyStateSubtext = document.getElementById('emptyStateSubtext');
+        const footerYear = document.getElementById('footerYear');
+
+        // Modal Gambar & Padam & Toast
+        const imageModal = document.getElementById('imageModal');
+        const imageModalTitle = document.getElementById('imageModalTitle');
+        const imageModalSubtitle = document.getElementById('imageModalSubtitle');
+        const modalDriveLink = document.getElementById('modalDriveLink');
+        const modalFullImage = document.getElementById('modalFullImage');
+        const deleteModal = document.getElementById('deleteModal');
+        const deleteModalMessage = document.getElementById('deleteModalMessage');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+        const toastContainer = document.getElementById('toastContainer');
+
+        // ==================== TARIKH & MASA OTOMATIK ====================
+        function updateLiveDateTime() {
+            const now = new Date();
+            const pad = (n) => String(n).padStart(2, '0');
+            const formatted = `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()}, ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+            autoDateTimeInput.value = formatted;
+            if (footerYear) {
+                footerYear.textContent = now.getFullYear();
+            }
+        }
+
+        // ==================== PENYIMPANAN TEMPATAN (LOCALSTORAGE) ====================
+        function loadFromStorage() {
+            try {
+                const rawReports = localStorage.getItem(STORAGE_KEY);
+                reports = rawReports ? JSON.parse(rawReports) : [];
+                if (!Array.isArray(reports)) reports = [];
+            } catch (err) {
+                console.error('Ralat membaca laporan dari localStorage:', err);
+                reports = [];
+            }
+
+            try {
+                const savedUrl = (localStorage.getItem(SHEET_URL_KEY) || '').trim();
+                googleSheetUrl = savedUrl || DEFAULT_SHEET_URL.trim();
+            } catch (err) {
+                console.error('Ralat membaca URL Google Sheets:', err);
+                googleSheetUrl = DEFAULT_SHEET_URL.trim();
+            }
+        }
+
+        // ==================== API GOOGLE APPS SCRIPT (CORS-SAFE POST & GET + FALLBACK) ====================
+        /**
+         * Permintaan JSONP sebagai sandaran (fallback) bagi GET apabila pelayar/iframe (blob:)
+         * menyekat redirect CORS dari script.google.com.
+         */
+        function jsonpRequest(url, timeoutMs = 8000) {
+            return new Promise((resolve, reject) => {
+                const cbName = '__ppsmJsonp_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
+                const script = document.createElement('script');
+                let settled = false;
+
+                const cleanup = () => {
+                    if (script.parentNode) script.parentNode.removeChild(script);
+                    try { delete window[cbName]; } catch (e) { window[cbName] = undefined; }
+                };
+
+                const timer = setTimeout(() => {
+                    if (settled) return;
+                    settled = true;
+                    cleanup();
+                    reject(new Error('Tamat masa menunggu respons Google Sheets (JSONP).'));
+                }, timeoutMs);
+
+                window[cbName] = (data) => {
+                    if (settled) return;
+                    settled = true;
+                    clearTimeout(timer);
+                    cleanup();
+                    resolve(data);
+                };
+
+                script.onerror = () => {
+                    if (settled) return;
+                    settled = true;
+                    clearTimeout(timer);
+                    cleanup();
+                    reject(new Error('Gagal memuatkan skrip dari Google Apps Script.'));
+                };
+
+                const sep = url.includes('?') ? '&' : '?';
+                script.src = `${url}${sep}callback=${encodeURIComponent(cbName)}`;
+                document.head.appendChild(script);
+            });
+        }
+
+        /**
+         * Menghantar permintaan GET ke Google Apps Script (ping / getAll).
+         * Mencuba fetch biasa dengan credentials: 'omit' dahulu, kemudian jatuh balik ke JSONP jika disekat CORS.
+         */
+        async function getFromGoogleSheet(baseUrl, action) {
+            const sep = baseUrl.includes('?') ? '&' : '?';
+            const fullUrl = `${baseUrl}${sep}action=${encodeURIComponent(action)}`;
+
+            try {
+                const response = await fetch(fullUrl, {
+                    method: 'GET',
+                    redirect: 'follow',
+                    credentials: 'omit'
+                });
+                if (!response.ok) {
+                    throw new Error(`Ralat HTTP ${response.status}`);
+                }
+                return await response.json();
+            } catch (fetchErr) {
+                console.warn('Fetch GET disekat/gagal, mencuba sandaran JSONP...', fetchErr.message);
+                try {
+                    return await jsonpRequest(fullUrl);
+                } catch (jsonpErr) {
+                    throw new Error('Failed to fetch (Sekatan CORS atau tetapan Deploy tidak tepat)');
+                }
+            }
+        }
+
+        /**
+         * Menghantar permintaan POST ke Google Apps Script menggunakan
+         * Content-Type: text/plain;charset=utf-8 untuk mengelakkan ralat CORS preflight.
+         * Jika redirect CORS disekat (seperti dalam iframe blob:), ia akan cuba semula dengan mode: 'no-cors'.
+         */
+        async function postToGoogleSheet(payload) {
+            if (!googleSheetUrl) {
+                throw new Error('URL Google Sheets belum ditetapkan.');
+            }
+
+            try {
+                const response = await fetch(googleSheetUrl, {
+                    method: 'POST',
+                    redirect: 'follow',
+                    credentials: 'omit',
+                    headers: {
+                        'Content-Type': 'text/plain;charset=utf-8'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Ralat HTTP ${response.status}`);
+                }
+
+                const result = await response.json();
+                if (result.status !== 'ok') {
+                    throw new Error(result.message || 'Ralat tidak diketahui dari Google Sheets.');
+                }
+                return result;
+            } catch (err) {
+                // Jika ralat berpunca daripada sekatan CORS redirect (TypeError: Failed to fetch),
+                // hantar semula menggunakan mode: 'no-cors' supaya data tetap sampai ke Google Sheets.
+                if (err instanceof TypeError || String(err.message).toLowerCase().includes('fetch')) {
+                    console.warn('Fetch POST disekat CORS, menghantar melalui mod keserasian (no-cors)...');
+                    await fetch(googleSheetUrl, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        redirect: 'follow',
+                        credentials: 'omit',
+                        headers: {
+                            'Content-Type': 'text/plain;charset=utf-8'
+                        },
+                        body: JSON.stringify(payload)
+                    });
+                    return {
+                        status: 'ok',
+                        opaque: true,
+                        message: 'Dihantar melalui mod keserasian (no-cors).'
+                    };
+                }
+                throw err;
+            }
+        }
+
+        function saveReportsToStorage() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(reports));
+                return true;
+            } catch (err) {
+                console.error('Ralat menyimpan ke localStorage:', err);
+                showToast('Ruang penyimpanan pelayar penuh! Padam laporan lama atau sambung ke Google Sheets.', 'error');
+                return false;
+            }
+        }
+
+        function saveSheetUrlToStorage(url) {
+            try {
+                googleSheetUrl = url.trim();
+                if (googleSheetUrl) {
+                    localStorage.setItem(SHEET_URL_KEY, googleSheetUrl);
+                } else {
+                    localStorage.removeItem(SHEET_URL_KEY);
+                }
+            } catch (err) {
+                console.error('Ralat menyimpan URL:', err);
+            }
+        }
+
+        // Menjana ID unik berturutan seperti PPSM-001
+        function generateUniqueId() {
+            let maxNum = 0;
+            try {
+                const savedCounter = parseInt(localStorage.getItem(COUNTER_KEY), 10);
+                if (!isNaN(savedCounter)) maxNum = savedCounter;
+            } catch (e) {}
+
+            reports.forEach(item => {
+                const match = String(item.id || '').match(/(\d+)$/);
+                if (match) {
+                    const num = parseInt(match[1], 10);
+                    if (num > maxNum) maxNum = num;
+                }
+            });
+
+            const nextNum = maxNum + 1;
+            try {
+                localStorage.setItem(COUNTER_KEY, String(nextNum));
+            } catch (e) {}
+
+            return `PPSM-${String(nextNum).padStart(3, '0')}`;
+        }
+
+        // ==================== PEMAMPATAN GAMBAR (CANVAS 800PX, JPEG 0.7) ====================
+        function processImageFile(file) {
+            if (!file) return;
+
+            if (!file.type.startsWith('image/')) {
+                showToast('Sila pilih fail gambar sahaja (JPG, PNG, WEBP).', 'warning');
+                return;
+            }
+
+            if (file.size > 15 * 1024 * 1024) {
+                showToast('Saiz gambar terlalu besar (had maksimum 15MB).', 'warning');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function (event) {
+                const img = new Image();
+                img.onload = function () {
+                    try {
+                        const MAX_WIDTH = 800;
+                        let width = img.width;
+                        let height = img.height;
+
+                        // Ubah saiz jika lebar melebihi 800px sambil mengekalkan nisbah aspek
+                        if (width > MAX_WIDTH) {
+                            height = Math.round((height * MAX_WIDTH) / width);
+                            width = MAX_WIDTH;
+                        }
+
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillRect(0, 0, width, height);
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        // Mampatkan kepada JPEG kualiti 0.7
+                        const compressed = canvas.toDataURL('image/jpeg', 0.7);
+                        currentImageBase64 = compressed;
+
+                        const approxKB = Math.round((compressed.length * 3) / 4 / 1024);
+                        imagePreview.src = compressed;
+                        imageFileName.textContent = file.name;
+                        imageFileInfo.textContent = `Dimampatkan • ~${approxKB} KB (${width}×${height}px)`;
+
+                        dropZone.classList.add('hidden');
+                        imagePreviewContainer.classList.remove('hidden');
+                    } catch (err) {
+                        console.error('Ralat mampatan imej:', err);
+                        showToast('Gagal memampatkan gambar.', 'error');
+                    }
+                };
+                img.onerror = () => showToast('Fail gambar tidak sah.', 'error');
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function clearSelectedImage() {
+            currentImageBase64 = null;
+            imageInput.value = '';
+            imagePreview.src = '';
+            imagePreviewContainer.classList.add('hidden');
+            dropZone.classList.remove('hidden');
+        }
+
+        // Pengendali Drag & Drop Gambar
+        dropZone.addEventListener('click', () => imageInput.click());
+        changeImageBtn.addEventListener('click', () => imageInput.click());
+        removeImageBtn.addEventListener('click', clearSelectedImage);
+
+        imageInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) {
+                processImageFile(e.target.files[0]);
+            }
+        });
+
+        ['dragenter', 'dragover'].forEach(evt => {
+            dropZone.addEventListener(evt, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropZone.classList.add('border-ppsm-600', 'bg-ppsm-50');
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(evt => {
+            dropZone.addEventListener(evt, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropZone.classList.remove('border-ppsm-600', 'bg-ppsm-50');
+            });
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) {
+                processImageFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        /**
+         * Menukar pautan Google Drive kepada pautan gambar kecil (thumbnail) yang boleh dipaparkan dalam <img>
+         */
+        function getDisplayImageUrl(report) {
+            if (report.imageBase64) return report.imageBase64;
+            if (!report.imageUrl) return null;
+
+            // Ekstrak ID fail Google Drive jika pautan adalah daripada Drive
+            const match = report.imageUrl.match(/\/d\/([a-zA-Z0-9_-]+)/) || report.imageUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+            if (match && match[1]) {
+                return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w1000`;
+            }
+            if (report.imageUrl.startsWith('http') || report.imageUrl.startsWith('data:image')) {
+                return report.imageUrl;
+            }
+            return null;
+        }
+
+        // ==================== PENYERAHAN BORANG ====================
+        reporterNameInput.addEventListener('input', () => {
+            if (reporterNameInput.value.trim()) {
+                errorReporterName.classList.add('hidden');
+                reporterNameInput.classList.remove('border-rose-500');
+            }
+        });
+
+        categoryInput.addEventListener('change', () => {
+            if (categoryInput.value) {
+                errorCategory.classList.add('hidden');
+                categoryInput.classList.remove('border-rose-500');
+            }
+        });
+
+        descriptionInput.addEventListener('input', () => {
+            if (descriptionInput.value.trim()) {
+                errorDescription.classList.add('hidden');
+                descriptionInput.classList.remove('border-rose-500');
+            }
+        });
+
+        resetFormBtn.addEventListener('click', () => {
+            formEl.reset();
+            clearSelectedImage();
+            updateLiveDateTime();
+            [errorReporterName, errorCategory, errorDescription].forEach(el => el.classList.add('hidden'));
+            [reporterNameInput, categoryInput, descriptionInput].forEach(el => el.classList.remove('border-rose-500'));
+        });
+
+        function setSubmitLoading(isLoading) {
+            submitBtn.disabled = isLoading;
+            if (isLoading) {
+                submitIcon.classList.add('hidden');
+                submitSpinner.classList.remove('hidden');
+                submitBtnText.textContent = 'Menghantar ke Google Sheets...';
+            } else {
+                submitIcon.classList.remove('hidden');
+                submitSpinner.classList.add('hidden');
+                submitBtnText.textContent = 'Hantar Laporan';
+            }
+        }
+
+        formEl.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const name = reporterNameInput.value.trim();
+            const category = categoryInput.value.trim();
+            const location = locationInput.value.trim();
+            const description = descriptionInput.value.trim();
+
+            let isValid = true;
+            if (!name) {
+                errorReporterName.classList.remove('hidden');
+                reporterNameInput.classList.add('border-rose-500');
+                isValid = false;
+            }
+            if (!category) {
+                errorCategory.classList.remove('hidden');
+                categoryInput.classList.add('border-rose-500');
+                isValid = false;
+            }
+            if (!description) {
+                errorDescription.classList.remove('hidden');
+                descriptionInput.classList.add('border-rose-500');
+                isValid = false;
+            }
+
+            if (!isValid) {
+                showToast('Sila lengkapkan semua medan wajib (*).', 'warning');
+                return;
+            }
+
+            updateLiveDateTime();
+            const newReport = {
+                id: generateUniqueId(),
+                dateTime: autoDateTimeInput.value,
+                reporterName: name,
+                category: category,
+                location: location || 'Tidak dinyatakan',
+                description: description,
+                status: 'Baru',
+                imageBase64: currentImageBase64 || null,
+                imageUrl: '',
+                synced: false
+            };
+
+            // Hantar ke Google Sheets jika disambung
+            if (googleSheetUrl) {
+                setSubmitLoading(true);
+                try {
+                    const res = await postToGoogleSheet({
+                        action: 'add',
+                        data: newReport
+                    });
+                    newReport.synced = true;
+                    if (res.imageUrl) {
+                        newReport.imageUrl = res.imageUrl;
+                    }
+                    showToast(`Laporan ${newReport.id} berjaya dihantar & disegerak ke Google Sheets!`, 'success');
+                } catch (err) {
+                    console.error('Gagal segerak ke Google Sheets:', err);
+                    newReport.synced = false;
+                    showToast(`Disimpan tempatan. Gagal segerak ke Sheet: ${err.message}`, 'warning');
+                } finally {
+                    setSubmitLoading(false);
+                }
+            } else {
+                showToast(`Laporan ${newReport.id} berjaya disimpan (Mod Tempatan).`, 'success');
+            }
+
+            reports.unshift(newReport);
+            if (!saveReportsToStorage()) {
+                // Jika ruang localStorage penuh kerana base64 tetapi sudah disegerak ke Drive, buang base64 tempatan
+                if (newReport.synced && newReport.imageUrl) {
+                    newReport.imageBase64 = null;
+                    saveReportsToStorage();
+                }
+            }
+
+            formEl.reset();
+            clearSelectedImage();
+            updateLiveDateTime();
+            renderDashboard();
+        });
+
+        // ==================== SEGERAK SEMULA & TARIK DARI GOOGLE SHEET ====================
+        async function resyncReport(id) {
+            if (!googleSheetUrl) {
+                showToast('URL Google Sheets belum ditetapkan.', 'warning');
+                return;
+            }
+
+            const report = reports.find(r => r.id === id);
+            if (!report) return;
+
+            const btn = document.getElementById(`resync-btn-${id}`);
+            if (btn) {
+                btn.disabled = true;
+                btn.textContent = 'Menyegerak...';
+            }
+
+            try {
+                const res = await postToGoogleSheet({
+                    action: 'add',
+                    data: report
+                });
+                report.synced = true;
+                if (res.imageUrl) {
+                    report.imageUrl = res.imageUrl;
+                }
+                saveReportsToStorage();
+                renderDashboard();
+                showToast(`Laporan ${report.id} berjaya disegerakkan ke Google Sheets.`, 'success');
+            } catch (err) {
+                console.error('Ralat segerak semula:', err);
+                showToast(`Gagal segerak semula: ${err.message}`, 'error');
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = 'Segerak Semula';
+                }
+            }
+        }
+
+        async function pullFromGoogleSheet(silent = false) {
+            if (!googleSheetUrl) {
+                if (!silent) {
+                    showToast('URL Google Sheets belum ditetapkan.', 'warning');
+                }
+                return;
+            }
+
+            pullSheetBtn.disabled = true;
+            pullSheetIcon.classList.add('animate-spin');
+            pullSheetText.textContent = 'Menarik data...';
+
+            try {
+                const result = await getFromGoogleSheet(googleSheetUrl, 'getAll');
+                if (result.status !== 'ok' || !Array.isArray(result.data)) {
+                    throw new Error(result.message || 'Format data dari Google Sheets tidak sah.');
+                }
+
+                const remoteReports = result.data.map(item => ({
+                    id: item.id || generateUniqueId(),
+                    dateTime: item.dateTime || '',
+                    reporterName: item.reporterName || 'Tanpa Nama',
+                    category: item.category || 'Lain-lain',
+                    location: item.location || 'Tidak dinyatakan',
+                    description: item.description || '',
+                    status: item.status || 'Baru',
+                    imageBase64: null,
+                    imageUrl: item.imageUrl || '',
+                    synced: true
+                }));
+
+                // Kekalkan rekod tempatan yang belum disegerak supaya tidak hilang
+                const remoteIds = new Set(remoteReports.map(r => r.id));
+                const unsyncedLocal = reports.filter(r => !r.synced && !remoteIds.has(r.id));
+
+                // Jika rekod tempatan mempunyai pratonton base64 bagi ID yang sama, kekalkan jika tiada imageUrl
+                const localMap = new Map(reports.map(r => [r.id, r]));
+                remoteReports.forEach(rem => {
+                    const loc = localMap.get(rem.id);
+                    if (loc && loc.imageBase64 && !rem.imageUrl) {
+                        rem.imageBase64 = loc.imageBase64;
+                    }
+                });
+
+                reports = [...unsyncedLocal, ...remoteReports];
+                saveReportsToStorage();
+                renderDashboard();
+                if (!silent) {
+                    showToast(`Berjaya menarik ${remoteReports.length} rekod dari Google Sheets.`, 'success');
+                }
+            } catch (err) {
+                console.error('Ralat menarik dari Sheet:', err);
+                if (!silent) {
+                    showToast(`Gagal menarik data: ${err.message}`, 'error');
+                }
+            } finally {
+                pullSheetBtn.disabled = false;
+                pullSheetIcon.classList.remove('animate-spin');
+                pullSheetText.textContent = 'Tarik dari Sheet';
+            }
+        }
+
+        // ==================== KEMAS KINI STATUS & PADAM ====================
+        async function updateReportStatus(id, newStatus) {
+            const report = reports.find(r => r.id === id);
+            if (!report) return;
+
+            const oldStatus = report.status;
+            report.status = newStatus;
+            saveReportsToStorage();
+            renderDashboard();
+
+            if (googleSheetUrl && report.synced) {
+                try {
+                    await postToGoogleSheet({
+                        action: 'updateStatus',
+                        id: report.id,
+                        status: newStatus
+                    });
+                    showToast(`Status ${report.id} dikemas kini kepada "${newStatus}" di Google Sheets.`, 'success');
+                } catch (err) {
+                    console.error('Gagal kemas kini status di Sheet:', err);
+                    showToast(`Status ditukar setempat, tetapi gagal di Sheet: ${err.message}`, 'warning');
+                }
+            } else {
+                showToast(`Status ${report.id} dikemas kini kepada "${newStatus}".`, 'info');
+            }
+        }
+
+        function openDeleteModal(id) {
+            const report = reports.find(r => r.id === id);
+            if (!report) return;
+
+            pendingDeleteId = id;
+            const sheetNote = (googleSheetUrl && report.synced)
+                ? ' Rekod ini juga akan dipadam dari Google Sheets.'
+                : '';
+            deleteModalMessage.textContent = `Adakah anda pasti mahu memadam laporan ${report.id} (${report.reporterName})?${sheetNote}`;
+            deleteModal.classList.remove('hidden');
+        }
+
+        function closeDeleteModal() {
+            pendingDeleteId = null;
+            deleteModal.classList.add('hidden');
+        }
+
+        confirmDeleteBtn.addEventListener('click', async () => {
+            if (!pendingDeleteId) return;
+
+            const target = reports.find(r => r.id === pendingDeleteId);
+            const targetId = pendingDeleteId;
+            closeDeleteModal();
+
+            reports = reports.filter(r => r.id !== targetId);
+            saveReportsToStorage();
+            renderDashboard();
+
+            if (googleSheetUrl && target && target.synced) {
+                try {
+                    await postToGoogleSheet({
+                        action: 'delete',
+                        id: targetId
+                    });
+                    showToast(`Laporan ${targetId} berjaya dipadam dari aplikasi & Google Sheets.`, 'success');
+                } catch (err) {
+                    console.error('Gagal padam di Google Sheets:', err);
+                    showToast(`Dipadam setempat, tetapi gagal padam di Sheet: ${err.message}`, 'warning');
+                }
+            } else {
+                showToast(`Laporan ${targetId} telah dipadam.`, 'info');
+            }
+        });
+
+        // ==================== LENCANA WARNA KATEGORI & STATUS ====================
+        function getCategoryBadgeClasses(category) {
+            switch (category) {
+                case 'Elektrik & Lampu':
+                    return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+                case 'Penghawa Dingin':
+                    return 'bg-cyan-100 text-cyan-800 border-cyan-200';
+                case 'Perabot & Kelengkapan':
+                    return 'bg-orange-100 text-orange-800 border-orange-200';
+                case 'Paip & Sanitari':
+                    return 'bg-teal-100 text-teal-800 border-teal-200';
+                case 'Bangunan & Awam':
+                    return 'bg-stone-200 text-stone-800 border-stone-300';
+                default:
+                    return 'bg-fuchsia-100 text-fuchsia-800 border-fuchsia-200';
+            }
+        }
+
+        function getStatusBadgeClasses(status) {
+            switch (status) {
+                case 'Baru':
+                    return 'bg-amber-100 text-amber-800 border-amber-200';
+                case 'Dalam Tindakan':
+                    return 'bg-blue-100 text-blue-800 border-blue-200';
+                case 'Selesai':
+                    return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+                default:
+                    return 'bg-slate-100 text-slate-700 border-slate-200';
+            }
+        }
+
+        function escapeHTML(str) {
+            return String(str || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        // ==================== PAPARAN STATISTIK & SENARAI LAPORAN ====================
+        function quickFilterStatus(status) {
+            statusFilter.value = status;
+            renderReportsList();
+        }
+
+        function updateStats() {
+            statTotal.textContent = reports.length;
+            statBaru.textContent = reports.filter(r => r.status === 'Baru').length;
+            statTindakan.textContent = reports.filter(r => r.status === 'Dalam Tindakan').length;
+            statSelesai.textContent = reports.filter(r => r.status === 'Selesai').length;
+        }
+
+        function getFilteredReports() {
+            const query = searchInput.value.trim().toLowerCase();
+            const cat = categoryFilter.value;
+            const stat = statusFilter.value;
+
+            return reports.filter(r => {
+                if (cat !== 'Semua' && r.category !== cat) return false;
+                if (stat !== 'Semua' && r.status !== stat) return false;
+
+                if (!query) return true;
+                return (
+                    (r.id && r.id.toLowerCase().includes(query)) ||
+                    (r.reporterName && r.reporterName.toLowerCase().includes(query)) ||
+                    (r.category && r.category.toLowerCase().includes(query)) ||
+                    (r.location && r.location.toLowerCase().includes(query)) ||
+                    (r.description && r.description.toLowerCase().includes(query))
+                );
+            });
+        }
+
+        function renderReportsList() {
+            const filtered = getFilteredReports();
+            filteredCountBadge.textContent = filtered.length;
+            reportsContainer.innerHTML = '';
+
+            if (filtered.length === 0) {
+                emptyState.classList.remove('hidden');
+                emptyStateSubtext.textContent = reports.length > 0
+                    ? 'Tiada laporan yang sepadan dengan carian atau penapis yang dipilih.'
+                    : 'Belum ada laporan kerosakan direkodkan. Sila isi borang di sebelah untuk membuat laporan pertama.';
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+
+            filtered.forEach(report => {
+                const card = document.createElement('article');
+                card.className = 'bg-white rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition-shadow overflow-hidden print-card';
+
+                const safeId = escapeHTML(report.id);
+                const safeDate = escapeHTML(report.dateTime);
+                const safeName = escapeHTML(report.reporterName);
+                const safeCat = escapeHTML(report.category || 'Lain-lain');
+                const safeLoc = escapeHTML(report.location || 'Tidak dinyatakan');
+                const safeDesc = escapeHTML(report.description);
+                const safeStatus = escapeHTML(report.status || 'Baru');
+
+                const catBadgeClass = getCategoryBadgeClasses(report.category);
+                const statusBadgeClass = getStatusBadgeClasses(report.status);
+                const displayImgUrl = getDisplayImageUrl(report);
+
+                // Lencana Segerak Google Sheets
+                const syncBadgeHtml = report.synced
+                    ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 no-print">
+                           <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                           Disegerak
+                       </span>`
+                    : `<div class="inline-flex items-center gap-1.5 no-print">
+                           <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+                               Tempatan
+                           </span>
+                           ${googleSheetUrl ? `
+                           <button type="button" id="resync-btn-${safeId}" onclick="resyncReport('${safeId}')"
+                               class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-semibold bg-ppsm-50 text-ppsm-700 border border-ppsm-200 hover:bg-ppsm-100 transition">
+                               Segerak Semula
+                           </button>` : ''}
+                       </div>`;
+
+                // Bahagian Gambar Kecil (Thumbnail)
+                const imgFallback = `https://placehold.co/300x200/e2e8f0/64748b?text=Tiada+Pratonton`;
+                const imageHtml = displayImgUrl
+                    ? `<div class="sm:w-36 shrink-0">
+                           <button type="button" onclick="openImageModal('${safeId}')"
+                               class="group relative w-full h-36 sm:h-full min-h-[120px] rounded-xl overflow-hidden bg-slate-100 border border-slate-200 block focus:outline-none focus:ring-2 focus:ring-ppsm-500">
+                               <img src="${displayImgUrl}" alt="Gambar ${safeId}" onerror="this.src='${imgFallback}'"
+                                   class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                               <div class="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/35 transition-colors flex items-center justify-center no-print">
+                                   <span class="opacity-0 group-hover:opacity-100 transition-opacity px-2.5 py-1 rounded-lg bg-white/95 text-slate-800 text-[11px] font-semibold shadow-sm">
+                                       Lihat Penuh
+                                   </span>
+                               </div>
+                           </button>
+                       </div>`
+                    : '';
+
+                card.innerHTML = `
+                    <div class="p-4 sm:p-5">
+                        <div class="flex flex-col sm:flex-row gap-4">
+                            <div class="flex-1 min-w-0 flex flex-col justify-between gap-3">
+                                <div>
+                                    <!-- Baris Atas: ID, Kategori, Status & Tarikh -->
+                                    <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5">
+                                        <div class="flex flex-wrap items-center gap-1.5">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-bold bg-ppsm-100 text-ppsm-900">
+                                                ${safeId}
+                                            </span>
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-semibold border ${catBadgeClass}">
+                                                ${safeCat}
+                                            </span>
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-semibold border ${statusBadgeClass}">
+                                                ${safeStatus}
+                                            </span>
+                                        </div>
+                                        <span class="text-xs font-mono text-slate-500">${safeDate}</span>
+                                    </div>
+
+                                    <!-- Nama Pelapor & Lokasi -->
+                                    <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs sm:text-sm mb-2.5">
+                                        <span class="inline-flex items-center gap-1.5 font-semibold text-slate-900">
+                                            <svg class="w-4 h-4 text-ppsm-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                            </svg>
+                                            ${safeName}
+                                        </span>
+                                        <span class="inline-flex items-center gap-1.5 text-slate-600">
+                                            <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                            </svg>
+                                            ${safeLoc}
+                                        </span>
+                                    </div>
+
+                                    <!-- Keterangan Kerosakan -->
+                                    <div class="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                                        <p class="text-xs sm:text-sm text-slate-700 leading-relaxed whitespace-pre-line">${safeDesc}</p>
+                                    </div>
+                                </div>
+
+                                <!-- Baris Kawalan: Tukar Status, Lencana Segerak & Padam -->
+                                <div class="flex flex-wrap items-center justify-between gap-2 pt-2.5 border-t border-slate-100 no-print">
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <select onchange="updateReportStatus('${safeId}', this.value)" aria-label="Tukar status laporan ${safeId}"
+                                            class="rounded-xl border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 focus:border-ppsm-600 focus:ring-2 focus:ring-ppsm-500/20 outline-none cursor-pointer">
+                                            <option value="Baru" ${report.status === 'Baru' ? 'selected' : ''}>Baru</option>
+                                            <option value="Dalam Tindakan" ${report.status === 'Dalam Tindakan' ? 'selected' : ''}>Dalam Tindakan</option>
+                                            <option value="Selesai" ${report.status === 'Selesai' ? 'selected' : ''}>Selesai</option>
+                                        </select>
+                                        ${syncBadgeHtml}
+                                    </div>
+
+                                    <button type="button" onclick="openDeleteModal('${safeId}')"
+                                        class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200/80 transition">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                        </svg>
+                                        Padam
+                                    </button>
+                                </div>
+                            </div>
+                            ${imageHtml}
+                        </div>
+                    </div>
+                `;
+
+                reportsContainer.appendChild(card);
+            });
+        }
+
+        function renderDashboard() {
+            updateStats();
+            renderReportsList();
+        }
+
+        // ==================== MODAL GAMBAR BERSAIZ PENUH ====================
+        function openImageModal(id) {
+            const report = reports.find(r => r.id === id);
+            if (!report) return;
+
+            const displayUrl = getDisplayImageUrl(report);
+            if (!displayUrl) return;
+
+            modalFullImage.src = displayUrl;
+            imageModalTitle.textContent = `Lampiran Gambar • ${report.id} (${report.category})`;
+            imageModalSubtitle.textContent = `${report.reporterName} — ${report.location} (${report.dateTime})`;
+
+            if (report.imageUrl && report.imageUrl.startsWith('http')) {
+                modalDriveLink.href = report.imageUrl;
+                modalDriveLink.classList.remove('hidden');
+            } else {
+                modalDriveLink.classList.add('hidden');
+            }
+
+            imageModal.classList.remove('hidden');
+        }
+
+        function closeImageModal() {
+            imageModal.classList.add('hidden');
+            modalFullImage.src = '';
+        }
+
+        // Tutup modal apabila klik luar kotak atau tekan Escape
+        [imageModal, deleteModal].forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    closeImageModal();
+                    closeDeleteModal();
+                }
+            });
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeImageModal();
+                closeDeleteModal();
+            }
+        });
+
+        // ==================== CARIAN, PENAPIS, EKSPORT CSV & CETAK ====================
+        searchInput.addEventListener('input', renderReportsList);
+        categoryFilter.addEventListener('change', renderReportsList);
+        statusFilter.addEventListener('change', renderReportsList);
+
+        exportCsvBtn.addEventListener('click', () => {
+            const dataToExport = getFilteredReports();
+            if (dataToExport.length === 0) {
+                showToast('Tiada rekod laporan untuk dieksport.', 'warning');
+                return;
+            }
+
+            try {
+                const headers = ['ID', 'Tarikh & Masa', 'Nama Pelapor', 'Kategori', 'Lokasi / Bilik', 'Laporan Kerosakan', 'Status', 'Status Segerak', 'Pautan Gambar'];
+                const esc = (v) => `"${String(v || '').replace(/"/g, '""')}"`;
+
+                const rows = dataToExport.map(r => [
+                    esc(r.id),
+                    esc(r.dateTime),
+                    esc(r.reporterName),
+                    esc(r.category),
+                    esc(r.location),
+                    esc(r.description),
+                    esc(r.status),
+                    esc(r.synced ? 'Disegerak' : 'Tempatan'),
+                    esc(r.imageUrl || (r.imageBase64 ? 'Gambar Tempatan' : 'Tiada'))
+                ].join(','));
+
+                const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\r\n');
+                const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+
+                const link = document.createElement('a');
+                const today = new Date().toISOString().slice(0, 10);
+                link.href = url;
+                link.download = `Laporan_Kerosakan_PPSM_${today}.csv`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+
+                showToast(`${dataToExport.length} rekod berjaya dieksport ke CSV.`, 'success');
+            } catch (err) {
+                console.error('Ralat eksport CSV:', err);
+                showToast('Gagal mengeksport fail CSV.', 'error');
+            }
+        });
+
+        printBtn.addEventListener('click', () => window.print());
+
+        // ==================== NOTIFIKASI TOAST ====================
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            const styles = {
+                success: 'bg-emerald-700 text-white border-emerald-600',
+                warning: 'bg-amber-600 text-white border-amber-500',
+                error: 'bg-rose-700 text-white border-rose-600',
+                info: 'bg-ppsm-800 text-white border-ppsm-700'
+            };
+            const icons = {
+                success: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>',
+                warning: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>',
+                error: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>',
+                info: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>'
+            };
+
+            toast.className = `pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl border shadow-lg text-xs sm:text-sm font-medium transition-all duration-300 translate-y-2 opacity-0 ${styles[type] || styles.info}`;
+            toast.innerHTML = `
+                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">${icons[type] || icons.info}</svg>
+                <span class="flex-1">${escapeHTML(message)}</span>
+            `;
+
+            toastContainer.appendChild(toast);
+            requestAnimationFrame(() => toast.classList.remove('translate-y-2', 'opacity-0'));
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-2', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        // ==================== PERMULAAN APLIKASI ====================
+        function initApp() {
+            updateLiveDateTime();
+            setInterval(updateLiveDateTime, 1000); // Kemas kini setiap saat
+
+            loadFromStorage();
+            renderDashboard();
+
+            // Tarik rekod terkini secara automatik di latar belakang jika URL Google Sheets telah ditetapkan
+            if (googleSheetUrl) {
+                pullFromGoogleSheet(true);
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
