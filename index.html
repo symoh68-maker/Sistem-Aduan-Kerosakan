@@ -3,15 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Laporan Kerosakan PPSM</title>
+    <title>Sistem Aduan Kerosakan PPSM</title>
     <script>
         // =========================================================================
         // TETAPAN GOOGLE SHEETS (TAMPAL URL /exec ANDA DI SINI SEBELUM KE GITHUB)
         // Contoh: const DEFAULT_SHEET_URL = 'https://script.google.com/macros/s/AKfycb.../exec';
         // =========================================================================
         const DEFAULT_SHEET_URL = 'https://script.google.com/macros/s/AKfycbzImrBev7Tc1pkS8o6cSI1NnyhVXMNXZREjWUUaOhkeditTxBeX6XWenVsDU_TY2fxYhg/exec';
-        // Nombor WhatsApp Admin (format antarabangsa bermula dengan 60, tanpa + atau -)
-        const DEFAULT_ADMIN_WHATSAPP = '60134368900';
+        // Tetapan Akaun Admin (UBAH NAMA PENGGUNA & KATA LALUAN DI SINI)
+        const ADMIN_USERNAME = 'admin';
+        const ADMIN_PASSWORD = 'ppsm2026';
+        // Pautan Portal DV3 USM
+        const DV3_PORTAL_URL = 'https://dv3.usm.my/';
     </script>
     <!-- Muat turun fon Inter dari Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -47,7 +50,7 @@
         }
     </script>
     <style>
-        /* Gaya cetakan yang kemas supaya hanya senarai laporan & statistik dicetak */
+        /* Gaya cetakan yang kemas supaya hanya senarai aduan & statistik dicetak */
         @media print {
             body {
                 background: #ffffff !important;
@@ -85,11 +88,38 @@
                     </div>
                     <div>
                         <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-white print:text-slate-900">
-                            Sistem Laporan Kerosakan PPSM
+                            Sistem Aduan Kerosakan PPSM
                         </h1>
                         <p class="text-xs sm:text-sm text-purple-200/90 mt-0.5 print:text-slate-600">
                             Portal Aduan, Penyelenggaraan Fasiliti &amp; Integrasi Google Sheets
                         </p>
+                    </div>
+                </div>
+
+                <!-- Kawalan Akaun Admin / Pengguna -->
+                <div class="flex items-center gap-2.5 self-start md:self-center no-print">
+                    <!-- Butang Log Masuk Admin (Dipapar pada Mod Pengguna) -->
+                    <button type="button" id="openAdminLoginBtn" onclick="openAdminLoginModal()"
+                        class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-white/15 hover:bg-white/25 text-white border border-white/20 backdrop-blur-sm transition">
+                        <svg class="w-4 h-4 text-purple-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                        </svg>
+                        <span>Log Masuk Admin</span>
+                    </button>
+
+                    <!-- Lencana & Butang Log Keluar (Dipapar pada Mod Admin) -->
+                    <div id="adminSessionControls" class="hidden flex items-center gap-2">
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-500/20 text-emerald-200 border border-emerald-400/30">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                            Mod Admin
+                        </span>
+                        <button type="button" id="adminLogoutBtn" onclick="logoutAdmin()"
+                            class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-rose-500/20 hover:bg-rose-500/35 text-rose-100 border border-rose-300/30 transition">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                            </svg>
+                            <span>Log Keluar</span>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -98,32 +128,32 @@
 
     <!-- ==================== KANDUNGAN UTAMA (2 LAJUR RESPONSIF) ==================== -->
     <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+        <div id="mainGrid" class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
 
-            <!-- ==================== LAJUR KIRI: BORANG LAPORAN KEROSAKAN ==================== -->
-            <section class="lg:col-span-5 lg:sticky lg:top-6 no-print">
+            <!-- ==================== LAJUR KIRI: BORANG ADUAN KEROSAKAN ==================== -->
+            <section id="formSection" class="lg:col-span-12 max-w-2xl mx-auto w-full no-print">
                 <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
-                    <!-- Pengepala Borang -->
-                    <div class="bg-gradient-to-r from-ppsm-50 to-indigo-50/70 px-5 sm:px-6 py-4 border-b border-slate-200/80">
-                        <h2 class="text-base sm:text-lg font-bold text-ppsm-950 flex items-center gap-2.5">
-                            <span class="w-8 h-8 rounded-lg bg-ppsm-800 text-white inline-flex items-center justify-center shrink-0">
+                    <!-- Pengepala Kad Borang -->
+                    <div class="bg-gradient-to-r from-ppsm-50 to-indigo-50/70 px-5 sm:px-6 py-4 border-b border-ppsm-100">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-8 h-8 rounded-xl bg-ppsm-700 text-white flex items-center justify-center shadow-sm">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                                 </svg>
                             </span>
-                            Borang Laporan Kerosakan
-                        </h2>
-                        <p class="text-xs sm:text-sm text-slate-600 mt-1">
-                            Lengkapkan maklumat kerosakan di bawah untuk tindakan segera.
-                        </p>
+                            <div>
+                                <h2 class="text-base font-bold text-slate-900">Borang Aduan Kerosakan</h2>
+                                <p class="text-xs text-slate-500">Lengkapkan maklumat kerosakan untuk tindakan penyelenggaraan</p>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- Borang -->
-                    <form id="damageReportForm" class="p-5 sm:p-6 space-y-4" novalidate>
-                        <!-- Nama Pelapor (Wajib) -->
+                    <!-- Borang Utama -->
+                    <form id="reportForm" class="p-5 sm:p-6 space-y-4" novalidate>
+                        <!-- Nama Pengadu (Wajib) -->
                         <div>
                             <label for="reporterName" class="block text-sm font-semibold text-slate-700 mb-1.5">
-                                Nama Pelapor <span class="text-rose-600">*</span>
+                                Nama Pengadu <span class="text-rose-600">*</span>
                             </label>
                             <div class="relative">
                                 <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
@@ -135,7 +165,7 @@
                                     placeholder="Contoh: Ahmad bin Abdullah"
                                     class="w-full rounded-xl border border-slate-300 bg-white pl-10 pr-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-ppsm-600 focus:ring-2 focus:ring-ppsm-500/20 outline-none transition">
                             </div>
-                            <p id="errorReporterName" class="hidden text-xs text-rose-600 mt-1 font-medium">Sila masukkan nama pelapor.</p>
+                            <p id="errorReporterName" class="hidden text-xs text-rose-600 mt-1 font-medium">Sila masukkan nama pengadu.</p>
                         </div>
 
                         <!-- Tarikh & Masa (DD/MM/YYYY, HH:MM:SS) -->
@@ -197,15 +227,15 @@
                             </div>
                         </div>
 
-                        <!-- Laporan Kerosakan (Wajib) -->
+                        <!-- Aduan Kerosakan (Wajib) -->
                         <div>
                             <label for="damageDescription" class="block text-sm font-semibold text-slate-700 mb-1.5">
-                                Laporan Kerosakan <span class="text-rose-600">*</span>
+                                Butiran Aduan Kerosakan <span class="text-rose-600">*</span>
                             </label>
                             <textarea id="damageDescription" name="damageDescription" rows="3" required
                                 placeholder="Nyatakan perincian kerosakan yang berlaku..."
                                 class="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-ppsm-600 focus:ring-2 focus:ring-ppsm-500/20 outline-none transition resize-y"></textarea>
-                            <p id="errorDescription" class="hidden text-xs text-rose-600 mt-1 font-medium">Sila masukkan penerangan kerosakan.</p>
+                            <p id="errorDescription" class="hidden text-xs text-rose-600 mt-1 font-medium">Sila masukkan butiran aduan kerosakan.</p>
                         </div>
 
                         <!-- Muat Naik Gambar (Seret & Lepas / Klik) -->
@@ -271,30 +301,15 @@
                                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                 </svg>
-                                <span id="submitBtnText">Hantar Laporan</span>
+                                <span id="submitBtnText">Hantar Aduan</span>
                             </button>
-                        </div>
-
-                        <!-- Banner Notifikasi WhatsApp Admin (dipaparkan selepas laporan dihantar) -->
-                        <div id="whatsappNotifyBanner" class="hidden mt-3 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                            <div class="text-xs text-emerald-900">
-                                <p class="font-bold">Laporan berjaya direkodkan!</p>
-                                <p id="whatsappBannerText" class="text-emerald-700 mt-0.5">Klik butang untuk maklumkan Admin melalui WhatsApp.</p>
-                            </div>
-                            <a id="whatsappBannerBtn" href="#" target="_blank" rel="noopener noreferrer"
-                                class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm transition shrink-0">
-                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                    <path d="M12.031 2C6.506 2 2.01 6.495 2.01 12.02c0 1.766.462 3.49 1.339 5.008L2 22l5.106-1.339a9.975 9.975 0 004.925 1.298h.004c5.524 0 10.02-4.496 10.02-10.02 0-2.677-1.043-5.194-2.936-7.087A9.958 9.958 0 0012.031 2zm5.847 14.165c-.246.693-1.434 1.326-1.99 1.409-.518.078-1.174.11-1.894-.119-.438-.139-1.001-.325-1.724-.637-3.035-1.31-5.017-4.383-5.169-4.585-.152-.202-1.235-1.643-1.235-3.135 0-1.491.781-2.224 1.059-2.527.277-.303.605-.379.807-.379.202 0 .403.002.58.01.186.009.436-.071.682.52.252.606.857 2.094.933 2.246.076.151.126.328.025.53-.101.202-.151.328-.303.505-.151.177-.319.395-.455.53-.151.151-.309.315-.133.618.177.303.784 1.294 1.684 2.096 1.157 1.031 2.133 1.351 2.436 1.503.303.151.48.126.656-.076.177-.202.757-.883.959-1.186.202-.303.404-.252.681-.151.277.101 1.766.833 2.069.984.303.152.505.227.58.353.076.126.076.732-.17 1.425z"/>
-                                </svg>
-                                <span>WhatsApp Admin</span>
-                            </a>
                         </div>
                     </form>
                 </div>
             </section>
 
-            <!-- ==================== LAJUR KANAN: STATISTIK, PENAPIS & SENARAI LAPORAN ==================== -->
-            <section class="lg:col-span-7 space-y-5 print-full-width">
+            <!-- ==================== LAJUR KANAN: STATISTIK, PENAPIS & SENARAI ADUAN (ADMIN SAHAJA) ==================== -->
+            <section id="adminDashboardSection" class="hidden lg:col-span-7 space-y-5 print-full-width">
 
                 <!-- 4 Kad Ringkasan Statistik -->
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -356,7 +371,7 @@
                     <!-- Baris 1: Tajuk Senarai & Butang Tindakan -->
                     <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
                         <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
-                            <span>Rekod Laporan</span>
+                            <span>Rekod Aduan</span>
                             <span id="filteredCountBadge" class="px-2 py-0.5 text-xs font-bold rounded-full bg-ppsm-100 text-ppsm-800">0</span>
                         </h3>
                         <div class="flex flex-wrap items-center gap-2">
@@ -428,7 +443,7 @@
                     </div>
                 </div>
 
-                <!-- Senarai Kad Laporan -->
+                <!-- Senarai Kad Aduan -->
                 <div id="reportsContainer" class="space-y-4">
                     <!-- Kad dijana oleh JavaScript -->
                 </div>
@@ -440,9 +455,9 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
                         </svg>
                     </div>
-                    <h3 class="text-sm sm:text-base font-bold text-slate-800">Tiada rekod laporan ditemui</h3>
+                    <h3 class="text-sm sm:text-base font-bold text-slate-800">Tiada rekod aduan ditemui</h3>
                     <p id="emptyStateSubtext" class="text-xs sm:text-sm text-slate-500 mt-1 max-w-md mx-auto">
-                        Belum ada laporan kerosakan direkodkan atau tiada padanan bagi penapis yang dipilih.
+                        Belum ada aduan kerosakan direkodkan atau tiada padanan bagi penapis yang dipilih.
                     </p>
                 </div>
             </section>
@@ -452,7 +467,7 @@
     <!-- ==================== PENGAKI (FOOTER) ==================== -->
     <footer class="mt-auto border-t border-slate-200 bg-white py-4 no-print">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
-            <p>&copy; <span id="footerYear">2026</span> Sistem Laporan Kerosakan PPSM. Hak cipta terpelihara.</p>
+            <p>&copy; <span id="footerYear">2026</span> Sistem Aduan Kerosakan PPSM. Hak cipta terpelihara.</p>
             <p>Menyokong penyimpanan tempatan &amp; penyegerakan langsung ke Google Sheets.</p>
         </div>
     </footer>
@@ -466,6 +481,13 @@
                     <p id="imageModalSubtitle" class="text-xs text-slate-500 truncate"></p>
                 </div>
                 <div class="flex items-center gap-2 shrink-0">
+                    <button type="button" id="modalDownloadBtn"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-emerald-800 bg-emerald-100 hover:bg-emerald-200 transition">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                        </svg>
+                        Muat Turun
+                    </button>
                     <a id="modalDriveLink" href="#" target="_blank" rel="noopener noreferrer"
                         class="hidden inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-ppsm-800 bg-ppsm-100 hover:bg-ppsm-200 transition">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -497,9 +519,9 @@
                     </svg>
                 </div>
                 <div class="flex-1">
-                    <h3 id="deleteModalTitle" class="text-base font-bold text-slate-900">Padam Laporan Ini?</h3>
+                    <h3 id="deleteModalTitle" class="text-base font-bold text-slate-900">Padam Aduan Ini?</h3>
                     <p id="deleteModalMessage" class="text-sm text-slate-600 mt-1">
-                        Adakah anda pasti mahu memadam laporan ini? Tindakan ini tidak boleh dibatalkan.
+                        Adakah anda pasti mahu memadam aduan ini? Tindakan ini tidak boleh dibatalkan.
                     </p>
                 </div>
             </div>
@@ -516,39 +538,174 @@
         </div>
     </div>
 
+    <!-- ==================== MODAL LOG MASUK ADMIN ==================== -->
+    <div id="adminLoginModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4 no-print" role="dialog" aria-modal="true" aria-labelledby="adminLoginModalTitle">
+        <div class="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-2xl border border-slate-200">
+            <div class="bg-gradient-to-r from-ppsm-950 to-indigo-900 px-6 py-4 text-white flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <span class="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-purple-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                        </svg>
+                    </span>
+                    <div>
+                        <h3 id="adminLoginModalTitle" class="text-base font-bold">Log Masuk Admin</h3>
+                        <p class="text-xs text-purple-200/90">Akses papan pemuka &amp; pengurusan aduan PPSM</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeAdminLoginModal()"
+                    class="p-1.5 rounded-lg text-purple-200 hover:text-white hover:bg-white/10 transition" aria-label="Tutup">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <form id="adminLoginForm" class="p-6 space-y-4">
+                <div>
+                    <label for="adminUsernameInput" class="block text-sm font-semibold text-slate-700 mb-1.5">
+                        Nama Pengguna
+                    </label>
+                    <input type="text" id="adminUsernameInput" required autocomplete="username"
+                        placeholder="Masukkan nama pengguna admin"
+                        class="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 focus:border-ppsm-600 focus:ring-2 focus:ring-ppsm-500/20 outline-none transition">
+                </div>
+                <div>
+                    <label for="adminPasswordInput" class="block text-sm font-semibold text-slate-700 mb-1.5">
+                        Kata Laluan
+                    </label>
+                    <input type="password" id="adminPasswordInput" required autocomplete="current-password"
+                        placeholder="Masukkan kata laluan"
+                        class="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm text-slate-900 focus:border-ppsm-600 focus:ring-2 focus:ring-ppsm-500/20 outline-none transition">
+                </div>
+                <p id="adminLoginError" class="hidden text-xs font-semibold text-rose-600 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2">
+                    Nama pengguna atau kata laluan tidak tepat.
+                </p>
+                <div class="pt-2 flex items-center justify-end gap-2.5">
+                    <button type="button" onclick="closeAdminLoginModal()"
+                        class="px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition">
+                        Batal
+                    </button>
+                    <button type="submit"
+                        class="px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-ppsm-800 to-indigo-700 hover:from-ppsm-900 hover:to-indigo-800 shadow-sm transition">
+                        Log Masuk
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL PEMBANTU KEY-IN PORTAL DV3 ==================== -->
+    <div id="dv3HelperModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4 no-print" role="dialog" aria-modal="true" aria-labelledby="dv3HelperTitle">
+        <div class="bg-white rounded-2xl max-w-xl w-full max-h-[90vh] flex flex-col overflow-hidden shadow-2xl border border-slate-200">
+            <!-- Pengepala Modal -->
+            <div class="bg-gradient-to-r from-indigo-900 to-ppsm-900 px-5 py-4 text-white flex items-center justify-between shrink-0">
+                <div class="min-w-0 pr-3">
+                    <h3 id="dv3HelperTitle" class="text-base font-bold truncate">Pembantu Key-In DV3</h3>
+                    <p id="dv3HelperSubtitle" class="text-xs text-indigo-200 truncate">Klik Salin pada setiap medan dan tampal (Ctrl+V) terus ke DV3</p>
+                </div>
+                <button type="button" onclick="closeDv3HelperModal()"
+                    class="p-1.5 rounded-lg text-indigo-200 hover:text-white hover:bg-white/10 transition shrink-0" aria-label="Tutup">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Bar Pantas Buka DV3 -->
+            <div class="px-5 py-3 bg-indigo-50/80 border-b border-indigo-100 flex flex-wrap items-center justify-between gap-2 shrink-0">
+                <span class="text-xs text-indigo-900 font-medium">
+                    Salin satu persatu tanpa perlu buka Notepad:
+                </span>
+                <div class="flex flex-wrap items-center gap-2">
+                    <button type="button" onclick="openDv3PortalTab()"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-white bg-indigo-700 hover:bg-indigo-800 shadow-sm transition">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                        </svg>
+                        Buka Portal DV3
+                    </button>
+                    <button type="button" onclick="openDv3SideBySide()"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-indigo-800 bg-white hover:bg-indigo-100 border border-indigo-200 transition">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/>
+                        </svg>
+                        Tetingkap Sebelah
+                    </button>
+                </div>
+            </div>
+
+            <!-- Senarai Medan Individu Untuk Disalin -->
+            <div id="dv3HelperFields" class="p-5 space-y-3 overflow-y-auto flex-1 bg-slate-50/50">
+                <!-- Dijana oleh JavaScript -->
+            </div>
+
+            <!-- Pengaki Modal: Simpan No. Rujukan DV3 -->
+            <div class="px-5 py-3.5 bg-white border-t border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shrink-0">
+                <div class="flex items-center gap-2 flex-1">
+                    <label for="dv3HelperRefInput" class="text-xs font-bold text-slate-700 shrink-0">No. DV3:</label>
+                    <input type="text" id="dv3HelperRefInput"
+                        placeholder="Masukkan No. Rujukan selepas key-in..."
+                        onkeydown="if(event.key==='Enter'){event.preventDefault();saveDv3RefFromModal();}"
+                        class="flex-1 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white px-3 py-2 text-xs sm:text-sm text-slate-900 focus:border-indigo-600 focus:ring-2 focus:ring-indigo-500/20 outline-none transition">
+                </div>
+                <div class="flex items-center justify-end gap-2">
+                    <button type="button" onclick="closeDv3HelperModal()"
+                        class="px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition">
+                        Tutup
+                    </button>
+                    <button type="button" onclick="saveDv3RefFromModal()"
+                        class="px-4 py-2 rounded-xl text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm transition">
+                        Simpan No. DV3
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- ==================== NOTIFIKASI TOAST ==================== -->
     <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2.5 max-w-sm w-[calc(100%-2.5rem)] pointer-events-none no-print"></div>
 
     <!-- ==================== SKRIP APLIKASI ==================== -->
     <script>
         /**
-         * Sistem Laporan Kerosakan PPSM (Versi Integrasi Google Sheets & Kategori)
-         * Menguruskan borang laporan, mampatan imej Canvas (800px, JPEG 0.7),
+         * Sistem Aduan Kerosakan PPSM (Versi Integrasi Google Sheets & Kategori)
+         * Menguruskan borang aduan, mampatan imej Canvas (800px, JPEG 0.7),
          * penyimpanan localStorage, dan penyegerakan penuh dengan Google Apps Script.
          */
 
         const STORAGE_KEY = 'ppsm_damage_reports_v2';
         const COUNTER_KEY = 'ppsm_damage_counter_v2';
         const SHEET_URL_KEY = 'ppsm_google_sheet_url_v2';
+        const ADMIN_SESSION_KEY = 'ppsm_admin_logged_in_v1';
 
         // ==================== KEADAAN APLIKASI & RUJUKAN DOM ====================
         let reports = [];
         let googleSheetUrl = '';
         let currentImageBase64 = null;
         let pendingDeleteId = null;
+        let activeDv3HelperId = null;
+        let dv3HelperFieldValues = {};
+        let isAdminLoggedIn = false;
 
-        // Borang Laporan
-        const formEl = document.getElementById('damageReportForm');
+        // Kawalan Peranan (Admin vs Pengguna)
+        const formSection = document.getElementById('formSection');
+        const adminDashboardSection = document.getElementById('adminDashboardSection');
+        const openAdminLoginBtn = document.getElementById('openAdminLoginBtn');
+        const adminSessionControls = document.getElementById('adminSessionControls');
+        const adminLoginModal = document.getElementById('adminLoginModal');
+        const adminLoginForm = document.getElementById('adminLoginForm');
+        const adminUsernameInput = document.getElementById('adminUsernameInput');
+        const adminPasswordInput = document.getElementById('adminPasswordInput');
+        const adminLoginError = document.getElementById('adminLoginError');
+
+        // Rujukan DOM Borang
+        const formEl = document.getElementById('reportForm');
         const reporterNameInput = document.getElementById('reporterName');
-        const errorReporterName = document.getElementById('errorReporterName');
         const autoDateTimeInput = document.getElementById('autoDateTime');
         const categoryInput = document.getElementById('categoryInput');
-        const errorCategory = document.getElementById('errorCategory');
         const locationInput = document.getElementById('locationInput');
         const descriptionInput = document.getElementById('damageDescription');
-        const errorDescription = document.getElementById('errorDescription');
-
-        // Muat Naik Gambar
         const imageInput = document.getElementById('imageInput');
         const dropZone = document.getElementById('dropZone');
         const imagePreviewContainer = document.getElementById('imagePreviewContainer');
@@ -557,19 +714,16 @@
         const imageFileInfo = document.getElementById('imageFileInfo');
         const changeImageBtn = document.getElementById('changeImageBtn');
         const removeImageBtn = document.getElementById('removeImageBtn');
-
-        // Butang Borang
         const resetFormBtn = document.getElementById('resetFormBtn');
         const submitBtn = document.getElementById('submitBtn');
         const submitIcon = document.getElementById('submitIcon');
         const submitSpinner = document.getElementById('submitSpinner');
         const submitBtnText = document.getElementById('submitBtnText');
-        const whatsappNotifyBanner = document.getElementById('whatsappNotifyBanner');
-        const whatsappBannerText = document.getElementById('whatsappBannerText');
-        const whatsappBannerBtn = document.getElementById('whatsappBannerBtn');
-        let lastSubmittedReportId = null;
+        const errorReporterName = document.getElementById('errorReporterName');
+        const errorCategory = document.getElementById('errorCategory');
+        const errorDescription = document.getElementById('errorDescription');
 
-        // Statistik, Bar Alat & Senarai
+        // Rujukan DOM Papan Pemuka Admin
         const statTotal = document.getElementById('statTotal');
         const statBaru = document.getElementById('statBaru');
         const statTindakan = document.getElementById('statTindakan');
@@ -586,28 +740,123 @@
         const reportsContainer = document.getElementById('reportsContainer');
         const emptyState = document.getElementById('emptyState');
         const emptyStateSubtext = document.getElementById('emptyStateSubtext');
-        const footerYear = document.getElementById('footerYear');
 
-        // Modal Gambar & Padam & Toast
+        // Rujukan DOM Modal & Toast
         const imageModal = document.getElementById('imageModal');
+        const modalFullImage = document.getElementById('modalFullImage');
         const imageModalTitle = document.getElementById('imageModalTitle');
         const imageModalSubtitle = document.getElementById('imageModalSubtitle');
+        const modalDownloadBtn = document.getElementById('modalDownloadBtn');
         const modalDriveLink = document.getElementById('modalDriveLink');
-        const modalFullImage = document.getElementById('modalFullImage');
         const deleteModal = document.getElementById('deleteModal');
         const deleteModalMessage = document.getElementById('deleteModalMessage');
         const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+        const dv3HelperModal = document.getElementById('dv3HelperModal');
+        const dv3HelperTitle = document.getElementById('dv3HelperTitle');
+        const dv3HelperSubtitle = document.getElementById('dv3HelperSubtitle');
+        const dv3HelperFields = document.getElementById('dv3HelperFields');
+        const dv3HelperRefInput = document.getElementById('dv3HelperRefInput');
         const toastContainer = document.getElementById('toastContainer');
+        const footerYear = document.getElementById('footerYear');
 
-        // ==================== TARIKH & MASA OTOMATIK ====================
+        // ==================== TARIKH & MASA LANGSUNG ====================
         function updateLiveDateTime() {
             const now = new Date();
             const pad = (n) => String(n).padStart(2, '0');
-            const formatted = `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()}, ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
-            autoDateTimeInput.value = formatted;
+            const dateStr = `${pad(now.getDate())}/${pad(now.getMonth() + 1)}/${now.getFullYear()}`;
+            const timeStr = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+            if (autoDateTimeInput) {
+                autoDateTimeInput.value = `${dateStr}, ${timeStr}`;
+            }
             if (footerYear) {
                 footerYear.textContent = now.getFullYear();
             }
+        }
+
+        // Pengendali Tutup Modal (Klik luar atau kekunci Escape)
+        [imageModal, deleteModal, adminLoginModal, dv3HelperModal].forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    closeImageModal();
+                    closeDeleteModal();
+                    closeAdminLoginModal();
+                    closeDv3HelperModal();
+                }
+            });
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeImageModal();
+                closeDeleteModal();
+                closeAdminLoginModal();
+                closeDv3HelperModal();
+            }
+        });
+
+        // ==================== PENGURUSAN AKAUN ADMIN & PAPARAN PERANAN ====================
+        function applyRoleView() {
+            if (isAdminLoggedIn) {
+                // Mod Admin: Papar Borang (kiri) + Papan Pemuka Penuh (kanan)
+                formSection.classList.remove('lg:col-span-12', 'max-w-2xl', 'mx-auto', 'w-full');
+                formSection.classList.add('lg:col-span-5', 'lg:sticky', 'lg:top-6');
+                adminDashboardSection.classList.remove('hidden');
+                openAdminLoginBtn.classList.add('hidden');
+                adminSessionControls.classList.remove('hidden');
+            } else {
+                // Mod Pengguna: Papar Borang Aduan sahaja (di tengah)
+                formSection.classList.remove('lg:col-span-5', 'lg:sticky', 'lg:top-6');
+                formSection.classList.add('lg:col-span-12', 'max-w-2xl', 'mx-auto', 'w-full');
+                adminDashboardSection.classList.add('hidden');
+                openAdminLoginBtn.classList.remove('hidden');
+                adminSessionControls.classList.add('hidden');
+            }
+        }
+
+        function openAdminLoginModal() {
+            adminLoginForm.reset();
+            adminLoginError.classList.add('hidden');
+            adminLoginModal.classList.remove('hidden');
+            setTimeout(() => adminUsernameInput.focus(), 50);
+        }
+
+        function closeAdminLoginModal() {
+            adminLoginModal.classList.add('hidden');
+            adminLoginError.classList.add('hidden');
+        }
+
+        adminLoginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const username = adminUsernameInput.value.trim();
+            const password = adminPasswordInput.value;
+
+            if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+                isAdminLoggedIn = true;
+                try {
+                    sessionStorage.setItem(ADMIN_SESSION_KEY, 'true');
+                } catch (err) {}
+                closeAdminLoginModal();
+                applyRoleView();
+                renderDashboard();
+                showToast('Berjaya log masuk sebagai Admin.', 'success');
+
+                if (googleSheetUrl) {
+                    pullFromGoogleSheet(true);
+                }
+            } else {
+                adminLoginError.classList.remove('hidden');
+                adminPasswordInput.value = '';
+                adminPasswordInput.focus();
+            }
+        });
+
+        function logoutAdmin() {
+            isAdminLoggedIn = false;
+            try {
+                sessionStorage.removeItem(ADMIN_SESSION_KEY);
+            } catch (err) {}
+            applyRoleView();
+            showToast('Anda telah log keluar daripada Mod Admin.', 'info');
         }
 
         // ==================== PENYIMPANAN TEMPATAN (LOCALSTORAGE) ====================
@@ -617,7 +866,7 @@
                 reports = rawReports ? JSON.parse(rawReports) : [];
                 if (!Array.isArray(reports)) reports = [];
             } catch (err) {
-                console.error('Ralat membaca laporan dari localStorage:', err);
+                console.error('Ralat membaca aduan dari localStorage:', err);
                 reports = [];
             }
 
@@ -631,10 +880,6 @@
         }
 
         // ==================== API GOOGLE APPS SCRIPT (CORS-SAFE POST & GET + FALLBACK) ====================
-        /**
-         * Permintaan JSONP sebagai sandaran (fallback) bagi GET apabila pelayar/iframe (blob:)
-         * menyekat redirect CORS dari script.google.com.
-         */
         function jsonpRequest(url, timeoutMs = 8000) {
             return new Promise((resolve, reject) => {
                 const cbName = '__ppsmJsonp_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
@@ -675,10 +920,6 @@
             });
         }
 
-        /**
-         * Menghantar permintaan GET ke Google Apps Script (ping / getAll).
-         * Mencuba fetch biasa dengan credentials: 'omit' dahulu, kemudian jatuh balik ke JSONP jika disekat CORS.
-         */
         async function getFromGoogleSheet(baseUrl, action) {
             const sep = baseUrl.includes('?') ? '&' : '?';
             const fullUrl = `${baseUrl}${sep}action=${encodeURIComponent(action)}`;
@@ -703,11 +944,6 @@
             }
         }
 
-        /**
-         * Menghantar permintaan POST ke Google Apps Script menggunakan
-         * Content-Type: text/plain;charset=utf-8 untuk mengelakkan ralat CORS preflight.
-         * Jika redirect CORS disekat (seperti dalam iframe blob:), ia akan cuba semula dengan mode: 'no-cors'.
-         */
         async function postToGoogleSheet(payload) {
             if (!googleSheetUrl) {
                 throw new Error('URL Google Sheets belum ditetapkan.');
@@ -734,8 +970,6 @@
                 }
                 return result;
             } catch (err) {
-                // Jika ralat berpunca daripada sekatan CORS redirect (TypeError: Failed to fetch),
-                // hantar semula menggunakan mode: 'no-cors' supaya data tetap sampai ke Google Sheets.
                 if (err instanceof TypeError || String(err.message).toLowerCase().includes('fetch')) {
                     console.warn('Fetch POST disekat CORS, menghantar melalui mod keserasian (no-cors)...');
                     await fetch(googleSheetUrl, {
@@ -764,7 +998,7 @@
                 return true;
             } catch (err) {
                 console.error('Ralat menyimpan ke localStorage:', err);
-                showToast('Ruang penyimpanan pelayar penuh! Padam laporan lama atau sambung ke Google Sheets.', 'error');
+                showToast('Ruang penyimpanan pelayar penuh! Padam aduan lama atau sambung ke Google Sheets.', 'error');
                 return false;
             }
         }
@@ -829,7 +1063,6 @@
                         let width = img.width;
                         let height = img.height;
 
-                        // Ubah saiz jika lebar melebihi 800px sambil mengekalkan nisbah aspek
                         if (width > MAX_WIDTH) {
                             height = Math.round((height * MAX_WIDTH) / width);
                             width = MAX_WIDTH;
@@ -843,7 +1076,6 @@
                         ctx.fillRect(0, 0, width, height);
                         ctx.drawImage(img, 0, 0, width, height);
 
-                        // Mampatkan kepada JPEG kualiti 0.7
                         const compressed = canvas.toDataURL('image/jpeg', 0.7);
                         currentImageBase64 = compressed;
 
@@ -906,14 +1138,10 @@
             }
         });
 
-        /**
-         * Menukar pautan Google Drive kepada pautan gambar kecil (thumbnail) yang boleh dipaparkan dalam <img>
-         */
         function getDisplayImageUrl(report) {
             if (report.imageBase64) return report.imageBase64;
             if (!report.imageUrl) return null;
 
-            // Ekstrak ID fail Google Drive jika pautan adalah daripada Drive
             const match = report.imageUrl.match(/\/d\/([a-zA-Z0-9_-]+)/) || report.imageUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/);
             if (match && match[1]) {
                 return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w1000`;
@@ -963,7 +1191,7 @@
             } else {
                 submitIcon.classList.remove('hidden');
                 submitSpinner.classList.add('hidden');
-                submitBtnText.textContent = 'Hantar Laporan';
+                submitBtnText.textContent = 'Hantar Aduan';
             }
         }
 
@@ -1008,10 +1236,10 @@
                 status: 'Baru',
                 imageBase64: currentImageBase64 || null,
                 imageUrl: '',
+                dv3Ref: '',
                 synced: false
             };
 
-            // Hantar ke Google Sheets jika disambung
             if (googleSheetUrl) {
                 setSubmitLoading(true);
                 try {
@@ -1023,7 +1251,7 @@
                     if (res.imageUrl) {
                         newReport.imageUrl = res.imageUrl;
                     }
-                    showToast(`Laporan ${newReport.id} berjaya dihantar & disegerak ke Google Sheets!`, 'success');
+                    showToast(`Aduan ${newReport.id} berjaya dihantar & disegerak ke Google Sheets!`, 'success');
                 } catch (err) {
                     console.error('Gagal segerak ke Google Sheets:', err);
                     newReport.synced = false;
@@ -1032,12 +1260,11 @@
                     setSubmitLoading(false);
                 }
             } else {
-                showToast(`Laporan ${newReport.id} berjaya disimpan (Mod Tempatan).`, 'success');
+                showToast(`Aduan ${newReport.id} berjaya disimpan (Mod Tempatan).`, 'success');
             }
 
             reports.unshift(newReport);
             if (!saveReportsToStorage()) {
-                // Jika ruang localStorage penuh kerana base64 tetapi sudah disegerak ke Drive, buang base64 tempatan
                 if (newReport.synced && newReport.imageUrl) {
                     newReport.imageBase64 = null;
                     saveReportsToStorage();
@@ -1048,33 +1275,7 @@
             clearSelectedImage();
             updateLiveDateTime();
             renderDashboard();
-
-            // Papar banner butang WhatsApp Admin bagi laporan yang baru dihantar
-            lastSubmittedReportId = newReport.id;
-            whatsappBannerText.textContent = `Maklumkan Admin tentang laporan ${newReport.id} melalui WhatsApp.`;
-            whatsappBannerBtn.href = buildWhatsAppAdminUrl(newReport);
-            whatsappNotifyBanner.classList.remove('hidden');
-            whatsappNotifyBanner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         });
-
-        // ==================== NOTIFIKASI WHATSAPP ADMIN ====================
-        function buildWhatsAppAdminUrl(report) {
-            const phone = String(DEFAULT_ADMIN_WHATSAPP || '').replace(/\D/g, '');
-            if (!phone || !report) return '#';
-
-            const message =
-                `*LAPORAN KEROSAKAN PPSM*\n\n` +
-                `ID Laporan: ${report.id}\n` +
-                `Tarikh & Masa: ${report.dateTime}\n` +
-                `Nama Pelapor: ${report.reporterName}\n` +
-                `Kategori: ${report.category}\n` +
-                `Lokasi / Bilik: ${report.location}\n` +
-                `Status: ${report.status}\n` +
-                `Kerosakan: ${report.description}` +
-                (report.imageUrl ? `\nGambar: ${report.imageUrl}` : '');
-
-            return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
-        }
 
         // ==================== SEGERAK SEMULA & TARIK DARI GOOGLE SHEET ====================
         async function resyncReport(id) {
@@ -1103,7 +1304,7 @@
                 }
                 saveReportsToStorage();
                 renderDashboard();
-                showToast(`Laporan ${report.id} berjaya disegerakkan ke Google Sheets.`, 'success');
+                showToast(`Aduan ${report.id} berjaya disegerakkan ke Google Sheets.`, 'success');
             } catch (err) {
                 console.error('Ralat segerak semula:', err);
                 showToast(`Gagal segerak semula: ${err.message}`, 'error');
@@ -1142,14 +1343,13 @@
                     status: item.status || 'Baru',
                     imageBase64: null,
                     imageUrl: item.imageUrl || '',
+                    dv3Ref: item.dv3Ref || '',
                     synced: true
                 }));
 
-                // Kekalkan rekod tempatan yang belum disegerak supaya tidak hilang
                 const remoteIds = new Set(remoteReports.map(r => r.id));
                 const unsyncedLocal = reports.filter(r => !r.synced && !remoteIds.has(r.id));
 
-                // Jika rekod tempatan mempunyai pratonton base64 bagi ID yang sama, kekalkan jika tiada imageUrl
                 const localMap = new Map(reports.map(r => [r.id, r]));
                 remoteReports.forEach(rem => {
                     const loc = localMap.get(rem.id);
@@ -1181,7 +1381,6 @@
             const report = reports.find(r => r.id === id);
             if (!report) return;
 
-            const oldStatus = report.status;
             report.status = newStatus;
             saveReportsToStorage();
             renderDashboard();
@@ -1203,15 +1402,243 @@
             }
         }
 
-        function openDeleteModal(id) {
+        // ==================== ALIRAN KERJA PANTAS PORTAL DV3 USM ====================
+        function copyToClipboardSafe(text) {
+            let copied = false;
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.top = '0';
+            textarea.style.left = '0';
+            textarea.style.width = '1px';
+            textarea.style.height = '1px';
+            textarea.style.padding = '0';
+            textarea.style.border = 'none';
+            textarea.style.outline = 'none';
+            textarea.style.boxShadow = 'none';
+            textarea.style.background = 'transparent';
+            document.body.appendChild(textarea);
+            textarea.focus();
+            textarea.select();
+            textarea.setSelectionRange(0, textarea.value.length);
+
+            try {
+                copied = document.execCommand('copy');
+            } catch (err) {
+                console.error('Gagal menyalin ke clipboard (execCommand):', err);
+            }
+            document.body.removeChild(textarea);
+
+            // Sandaran Clipboard API jika dijalankan pada HTTPS (contoh: GitHub Pages)
+            if (!copied && navigator.clipboard && window.isSecureContext) {
+                try {
+                    navigator.clipboard.writeText(text);
+                    copied = true;
+                } catch (err) {
+                    console.error('Gagal menyalin ke clipboard (API):', err);
+                }
+            }
+            return copied;
+        }
+
+        function openDv3PortalTab() {
+            window.open(DV3_PORTAL_URL, '_blank', 'noopener,noreferrer');
+        }
+
+        function openDv3SideBySide() {
+            const w = Math.max(600, Math.floor(window.screen.availWidth / 2));
+            const h = window.screen.availHeight || 800;
+            const left = Math.floor(window.screen.availWidth / 2);
+            window.open(DV3_PORTAL_URL, 'dv3PortalWindow', `width=${w},height=${h},left=${left},top=0,resizable=yes,scrollbars=yes`);
+        }
+
+        function openDv3HelperModal(id) {
             const report = reports.find(r => r.id === id);
             if (!report) return;
 
+            activeDv3HelperId = id;
+            dv3HelperTitle.textContent = `Pembantu Key-In DV3 • ${report.id}`;
+            dv3HelperSubtitle.textContent = `${report.reporterName} (${report.dateTime})`;
+            dv3HelperRefInput.value = report.dv3Ref || '';
+
+            const summaryTitle = `${report.category || 'Aduan Kerosakan'} - ${report.location || 'PPSM'} (${report.id})`;
+            const fullDesc = `${report.description || '-'}\n\n[Rujukan PPSM: ${report.id} | Pengadu: ${report.reporterName || '-'} | Tarikh: ${report.dateTime || '-'}]`;
+
+            const fields = [
+                { key: 'title', label: 'Tajuk Ringkas Aduan', value: summaryTitle, multiline: false },
+                { key: 'location', label: 'Lokasi / Bilik', value: report.location || 'Tidak dinyatakan', multiline: false },
+                { key: 'category', label: 'Kategori Kerosakan', value: report.category || 'Lain-lain', multiline: false },
+                { key: 'reporter', label: 'Nama Pengadu', value: report.reporterName || '-', multiline: false },
+                { key: 'descOnly', label: 'Butiran Kerosakan Sahaja', value: report.description || '-', multiline: true },
+                { key: 'descFull', label: 'Butiran Lengkap (+ ID & Pengadu)', value: fullDesc, multiline: true }
+            ];
+
+            if (report.imageUrl) {
+                fields.push({ key: 'imageUrl', label: 'Pautan Gambar (Google Drive)', value: report.imageUrl, multiline: false });
+            }
+
+            dv3HelperFieldValues = {};
+            let html = '';
+
+            fields.forEach(f => {
+                dv3HelperFieldValues[f.key] = f.value;
+                const valueDisplay = f.multiline
+                    ? `<div class="text-xs sm:text-sm text-slate-800 whitespace-pre-line break-words leading-relaxed">${escapeHTML(f.value)}</div>`
+                    : `<div class="text-xs sm:text-sm font-medium text-slate-900 break-words">${escapeHTML(f.value)}</div>`;
+
+                html += `
+                    <div class="bg-white rounded-xl border border-slate-200 p-3 flex items-start justify-between gap-3 shadow-sm">
+                        <div class="flex-1 min-w-0">
+                            <div class="text-[11px] font-bold uppercase tracking-wide text-slate-400 mb-1">${escapeHTML(f.label)}</div>
+                            ${valueDisplay}
+                        </div>
+                        <button type="button" onclick="copyDv3Field('${f.key}', this)"
+                            class="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                            </svg>
+                            <span>Salin</span>
+                        </button>
+                    </div>
+                `;
+            });
+
+            if (report.imageBase64 || report.imageUrl) {
+                html += `
+                    <div class="bg-emerald-50/70 rounded-xl border border-emerald-200 p-3 flex items-center justify-between gap-3">
+                        <div class="text-xs font-semibold text-emerald-900">
+                            Lampiran Gambar Kerosakan tersedia untuk dimuat naik ke DV3
+                        </div>
+                        <button type="button" onclick="downloadReportImage('${escapeHTML(report.id)}')"
+                            class="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm transition">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                            </svg>
+                            Muat Turun Gambar
+                        </button>
+                    </div>
+                `;
+            }
+
+            dv3HelperFields.innerHTML = html;
+            dv3HelperModal.classList.remove('hidden');
+        }
+
+        function closeDv3HelperModal() {
+            dv3HelperModal.classList.add('hidden');
+            activeDv3HelperId = null;
+        }
+
+        function copyDv3Field(fieldKey, btnEl) {
+            const text = dv3HelperFieldValues[fieldKey];
+            if (text === undefined) return;
+
+            const ok = copyToClipboardSafe(text);
+            if (ok) {
+                // Tukar butang kepada status hijau "✓ Disalin" supaya admin tahu medan mana sudah disalin
+                btnEl.className = 'shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold text-emerald-800 bg-emerald-100 border border-emerald-300 transition';
+                btnEl.innerHTML = `
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    <span>Disalin</span>
+                `;
+                showToast('Medan disalin! Tekan Ctrl+V di portal DV3.', 'success');
+            } else {
+                showToast('Gagal menyalin secara automatik.', 'warning');
+            }
+        }
+
+        async function saveDv3RefFromModal() {
+            if (!activeDv3HelperId) return;
+            const id = activeDv3HelperId;
+            const refVal = dv3HelperRefInput.value.trim();
+
+            // Segerakkan nilai ke input kad jika ada, kemudian simpan
+            const cardInput = document.getElementById(`dv3-input-${id}`);
+            if (cardInput) {
+                cardInput.value = refVal;
+            }
+            await saveDv3Ref(id, refVal);
+            closeDv3HelperModal();
+        }
+
+        async function saveDv3Ref(id, overrideRefVal) {
+            const report = reports.find(r => r.id === id);
+            const inputEl = document.getElementById(`dv3-input-${id}`);
+            if (!report) return;
+
+            const refVal = overrideRefVal !== undefined
+                ? String(overrideRefVal).trim()
+                : (inputEl ? inputEl.value.trim() : '');
+            report.dv3Ref = refVal;
+
+            // Tukar status automatik kepada "Dalam Tindakan" jika masih "Baru" dan No. DV3 diisi
+            let statusAutoUpdated = false;
+            if (refVal && report.status === 'Baru') {
+                report.status = 'Dalam Tindakan';
+                statusAutoUpdated = true;
+            }
+
+            saveReportsToStorage();
+            renderDashboard();
+
+            if (googleSheetUrl && report.synced) {
+                try {
+                    await postToGoogleSheet({
+                        action: 'updateDv3Ref',
+                        id: report.id,
+                        dv3Ref: refVal,
+                        status: statusAutoUpdated ? report.status : undefined
+                    });
+                    const msg = statusAutoUpdated
+                        ? `No. DV3 (${refVal}) disimpan & status ditukar kepada "Dalam Tindakan".`
+                        : `No. Rujukan DV3 bagi ${report.id} berjaya disimpan ke Google Sheets.`;
+                    showToast(msg, 'success');
+                } catch (err) {
+                    console.error('Gagal simpan No. DV3 di Sheet:', err);
+                    showToast(`Disimpan setempat, tetapi gagal di Sheet: ${err.message}`, 'warning');
+                }
+            } else {
+                showToast(`No. Rujukan DV3 bagi ${report.id} telah disimpan.`, 'info');
+            }
+        }
+
+        function downloadReportImage(id) {
+            const report = reports.find(r => r.id === id);
+            if (!report) return;
+
+            // Jika gambar tempatan (Base64), muat turun terus sebagai fail JPEG
+            if (report.imageBase64) {
+                const link = document.createElement('a');
+                link.href = report.imageBase64;
+                link.download = `${report.id}_kerosakan.jpg`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                showToast(`Memuat turun gambar ${report.id}...`, 'success');
+                return;
+            }
+
+            // Jika gambar di Google Drive, guna pautan muat turun terus Drive
+            if (report.imageUrl) {
+                const match = report.imageUrl.match(/\/d\/([a-zA-Z0-9_-]+)/) || report.imageUrl.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+                const downloadUrl = (match && match[1])
+                    ? `https://drive.google.com/uc?export=download&id=${match[1]}`
+                    : report.imageUrl;
+                window.open(downloadUrl, '_blank', 'noopener,noreferrer');
+                showToast(`Membuka muat turun gambar ${report.id}...`, 'info');
+                return;
+            }
+
+            showToast('Tiada gambar dilampirkan untuk aduan ini.', 'warning');
+        }
+
+        function openDeleteModal(id) {
+            const report = reports.find(r => r.id === id);
+            if (!report) return;
             pendingDeleteId = id;
-            const sheetNote = (googleSheetUrl && report.synced)
-                ? ' Rekod ini juga akan dipadam dari Google Sheets.'
-                : '';
-            deleteModalMessage.textContent = `Adakah anda pasti mahu memadam laporan ${report.id} (${report.reporterName})?${sheetNote}`;
+            deleteModalMessage.textContent = `Adakah anda pasti mahu memadam aduan ${report.id} (${report.reporterName})? Tindakan ini tidak boleh dibatalkan.`;
             deleteModal.classList.remove('hidden');
         }
 
@@ -1237,13 +1664,13 @@
                         action: 'delete',
                         id: targetId
                     });
-                    showToast(`Laporan ${targetId} berjaya dipadam dari aplikasi & Google Sheets.`, 'success');
+                    showToast(`Aduan ${targetId} berjaya dipadam dari aplikasi & Google Sheets.`, 'success');
                 } catch (err) {
                     console.error('Gagal padam di Google Sheets:', err);
                     showToast(`Dipadam setempat, tetapi gagal padam di Sheet: ${err.message}`, 'warning');
                 }
             } else {
-                showToast(`Laporan ${targetId} telah dipadam.`, 'info');
+                showToast(`Aduan ${targetId} telah dipadam.`, 'info');
             }
         });
 
@@ -1287,7 +1714,7 @@
                 .replace(/'/g, '&#039;');
         }
 
-        // ==================== PAPARAN STATISTIK & SENARAI LAPORAN ====================
+        // ==================== PAPARAN STATISTIK & SENARAI ADUAN ====================
         function quickFilterStatus(status) {
             statusFilter.value = status;
             renderReportsList();
@@ -1315,7 +1742,8 @@
                     (r.reporterName && r.reporterName.toLowerCase().includes(query)) ||
                     (r.category && r.category.toLowerCase().includes(query)) ||
                     (r.location && r.location.toLowerCase().includes(query)) ||
-                    (r.description && r.description.toLowerCase().includes(query))
+                    (r.description && r.description.toLowerCase().includes(query)) ||
+                    (r.dv3Ref && r.dv3Ref.toLowerCase().includes(query))
                 );
             });
         }
@@ -1328,8 +1756,8 @@
             if (filtered.length === 0) {
                 emptyState.classList.remove('hidden');
                 emptyStateSubtext.textContent = reports.length > 0
-                    ? 'Tiada laporan yang sepadan dengan carian atau penapis yang dipilih.'
-                    : 'Belum ada laporan kerosakan direkodkan. Sila isi borang di sebelah untuk membuat laporan pertama.';
+                    ? 'Tiada aduan yang sepadan dengan carian atau penapis yang dipilih.'
+                    : 'Belum ada aduan kerosakan direkodkan. Sila isi borang di sebelah untuk membuat aduan pertama.';
                 return;
             }
 
@@ -1346,42 +1774,37 @@
                 const safeLoc = escapeHTML(report.location || 'Tidak dinyatakan');
                 const safeDesc = escapeHTML(report.description);
                 const safeStatus = escapeHTML(report.status || 'Baru');
+                const safeDv3Ref = escapeHTML(report.dv3Ref || '');
 
                 const catBadgeClass = getCategoryBadgeClasses(report.category);
                 const statusBadgeClass = getStatusBadgeClasses(report.status);
                 const displayImgUrl = getDisplayImageUrl(report);
 
-                // Lencana Segerak Google Sheets
-                const syncBadgeHtml = report.synced
-                    ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 no-print">
-                           <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-                           Disegerak
+                const dv3BadgeHtml = safeDv3Ref
+                    ? `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-xs font-bold bg-indigo-100 text-indigo-800 border border-indigo-200">
+                           DV3: ${safeDv3Ref}
                        </span>`
-                    : `<div class="inline-flex items-center gap-1.5 no-print">
-                           <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
-                               Tempatan
-                           </span>
-                           ${googleSheetUrl ? `
-                           <button type="button" id="resync-btn-${safeId}" onclick="resyncReport('${safeId}')"
-                               class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-semibold bg-ppsm-50 text-ppsm-700 border border-ppsm-200 hover:bg-ppsm-100 transition">
-                               Segerak Semula
-                           </button>` : ''}
-                       </div>`;
+                    : '';
 
-                // Bahagian Gambar Kecil (Thumbnail)
-                const imgFallback = `https://placehold.co/300x200/e2e8f0/64748b?text=Tiada+Pratonton`;
+                const syncBadgeHtml = report.synced
+                    ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                           <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>Disegerak
+                       </span>`
+                    : `<span class="inline-flex items-center gap-1.5">
+                           <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                               <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>Tempatan
+                           </span>
+                           ${googleSheetUrl ? `<button type="button" id="resync-btn-${safeId}" onclick="resyncReport('${safeId}')" class="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-ppsm-50 text-ppsm-700 hover:bg-ppsm-100 border border-ppsm-200 transition">Segerak Semula</button>` : ''}
+                       </span>`;
+
                 const imageHtml = displayImgUrl
-                    ? `<div class="sm:w-36 shrink-0">
-                           <button type="button" onclick="openImageModal('${safeId}')"
-                               class="group relative w-full h-36 sm:h-full min-h-[120px] rounded-xl overflow-hidden bg-slate-100 border border-slate-200 block focus:outline-none focus:ring-2 focus:ring-ppsm-500">
-                               <img src="${displayImgUrl}" alt="Gambar ${safeId}" onerror="this.src='${imgFallback}'"
-                                   class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
-                               <div class="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/35 transition-colors flex items-center justify-center no-print">
-                                   <span class="opacity-0 group-hover:opacity-100 transition-opacity px-2.5 py-1 rounded-lg bg-white/95 text-slate-800 text-[11px] font-semibold shadow-sm">
-                                       Lihat Penuh
-                                   </span>
-                               </div>
-                           </button>
+                    ? `<div class="sm:w-32 sm:h-32 w-full h-44 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 shrink-0 cursor-pointer group relative" onclick="openImageModal('${safeId}')">
+                           <img src="${escapeHTML(displayImgUrl)}" alt="Gambar kerosakan ${safeId}" loading="lazy"
+                               onerror="this.src='https://placehold.co/400x400/e2e8f0/475569?text=Tiada+Pratonton'"
+                               class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200">
+                           <div class="absolute inset-0 bg-slate-900/0 group-hover:bg-slate-900/30 transition flex items-center justify-center no-print">
+                               <span class="opacity-0 group-hover:opacity-100 text-white text-xs font-semibold bg-slate-900/75 px-2.5 py-1 rounded-lg transition">Lihat</span>
+                           </div>
                        </div>`
                     : '';
 
@@ -1402,11 +1825,12 @@
                                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-semibold border ${statusBadgeClass}">
                                                 ${safeStatus}
                                             </span>
+                                            ${dv3BadgeHtml}
                                         </div>
                                         <span class="text-xs font-mono text-slate-500">${safeDate}</span>
                                     </div>
 
-                                    <!-- Nama Pelapor & Lokasi -->
+                                    <!-- Nama Pengadu & Lokasi -->
                                     <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs sm:text-sm mb-2.5">
                                         <span class="inline-flex items-center gap-1.5 font-semibold text-slate-900">
                                             <svg class="w-4 h-4 text-ppsm-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1427,36 +1851,57 @@
                                     <div class="bg-slate-50 rounded-xl p-3 border border-slate-100">
                                         <p class="text-xs sm:text-sm text-slate-700 leading-relaxed whitespace-pre-line">${safeDesc}</p>
                                     </div>
+
+                                    <!-- Bar Tindakan Pantas DV3 USM (Admin Sahaja) -->
+                                    <div class="mt-2.5 p-2.5 rounded-xl bg-indigo-50/70 border border-indigo-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2 no-print">
+                                        <div class="flex flex-wrap items-center gap-1.5">
+                                            <button type="button" onclick="openDv3HelperModal('${safeId}')"
+                                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-indigo-700 hover:bg-indigo-800 shadow-sm transition">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                                                </svg>
+                                                Pembantu Key-In DV3
+                                            </button>
+                                            ${displayImgUrl ? `
+                                            <button type="button" onclick="downloadReportImage('${safeId}')"
+                                                class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-emerald-800 bg-emerald-100/90 hover:bg-emerald-200 border border-emerald-200 transition">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                                                </svg>
+                                                Muat Turun Gambar
+                                            </button>` : ''}
+                                        </div>
+                                        <div class="flex items-center gap-1.5">
+                                            <input type="text" id="dv3-input-${safeId}" value="${safeDv3Ref}"
+                                                placeholder="No. Rujukan DV3..."
+                                                onkeydown="if(event.key==='Enter'){event.preventDefault();saveDv3Ref('${safeId}');}"
+                                                class="w-36 sm:w-40 rounded-lg border border-indigo-200 bg-white px-2.5 py-1 text-xs text-slate-800 placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 outline-none">
+                                            <button type="button" onclick="saveDv3Ref('${safeId}')"
+                                                class="px-2.5 py-1 rounded-lg text-xs font-semibold text-indigo-800 bg-white hover:bg-indigo-100 border border-indigo-200 transition">
+                                                Simpan
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
 
-                                <!-- Baris Kawalan: Tukar Status, Lencana Segerak & Padam -->
+                                <!-- Bar Kawalan Bawah: Status, Segerak & Padam -->
                                 <div class="flex flex-wrap items-center justify-between gap-2 pt-2.5 border-t border-slate-100 no-print">
                                     <div class="flex flex-wrap items-center gap-2">
-                                        <select onchange="updateReportStatus('${safeId}', this.value)" aria-label="Tukar status ${safeId}"
-                                            class="rounded-xl border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 focus:border-ppsm-600 focus:ring-2 focus:ring-ppsm-500/20 outline-none transition">
+                                        <select aria-label="Tukar status aduan ${safeId}" onchange="updateReportStatus('${safeId}', this.value)"
+                                            class="rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 focus:border-ppsm-600 focus:ring-2 focus:ring-ppsm-500/20 outline-none transition">
                                             <option value="Baru" ${report.status === 'Baru' ? 'selected' : ''}>Baru</option>
                                             <option value="Dalam Tindakan" ${report.status === 'Dalam Tindakan' ? 'selected' : ''}>Dalam Tindakan</option>
                                             <option value="Selesai" ${report.status === 'Selesai' ? 'selected' : ''}>Selesai</option>
                                         </select>
                                         ${syncBadgeHtml}
                                     </div>
-                                    <div class="flex items-center gap-1.5">
-                                        <a href="${buildWhatsAppAdminUrl(report)}" target="_blank" rel="noopener noreferrer"
-                                            class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 transition">
-                                            <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                                <path d="M12.031 2C6.506 2 2.01 6.495 2.01 12.02c0 1.766.462 3.49 1.339 5.008L2 22l5.106-1.339a9.975 9.975 0 004.925 1.298h.004c5.524 0 10.02-4.496 10.02-10.02 0-2.677-1.043-5.194-2.936-7.087A9.958 9.958 0 0012.031 2zm5.847 14.165c-.246.693-1.434 1.326-1.99 1.409-.518.078-1.174.11-1.894-.119-.438-.139-1.001-.325-1.724-.637-3.035-1.31-5.017-4.383-5.169-4.585-.152-.202-1.235-1.643-1.235-3.135 0-1.491.781-2.224 1.059-2.527.277-.303.605-.379.807-.379.202 0 .403.002.58.01.186.009.436-.071.682.52.252.606.857 2.094.933 2.246.076.151.126.328.025.53-.101.202-.151.328-.303.505-.151.177-.319.395-.455.53-.151.151-.309.315-.133.618.177.303.784 1.294 1.684 2.096 1.157 1.031 2.133 1.351 2.436 1.503.303.151.48.126.656-.076.177-.202.757-.883.959-1.186.202-.303.404-.252.681-.151.277.101 1.766.833 2.069.984.303.152.505.227.58.353.076.126.076.732-.17 1.425z"/>
-                                            </svg>
-                                            WhatsApp
-                                        </a>
-
-                                        <button type="button" onclick="openDeleteModal('${safeId}')"
-                                            class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200/80 transition">
-                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                            </svg>
-                                            Padam
-                                        </button>
-                                    </div>
+                                    <button type="button" onclick="openDeleteModal('${safeId}')"
+                                        class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                        </svg>
+                                        Padam
+                                    </button>
                                 </div>
                             </div>
                             ${imageHtml}
@@ -1484,6 +1929,7 @@
             modalFullImage.src = displayUrl;
             imageModalTitle.textContent = `Lampiran Gambar • ${report.id} (${report.category})`;
             imageModalSubtitle.textContent = `${report.reporterName} — ${report.location} (${report.dateTime})`;
+            modalDownloadBtn.onclick = () => downloadReportImage(report.id);
 
             if (report.imageUrl && report.imageUrl.startsWith('http')) {
                 modalDriveLink.href = report.imageUrl;
@@ -1500,23 +1946,6 @@
             modalFullImage.src = '';
         }
 
-        // Tutup modal apabila klik luar kotak atau tekan Escape
-        [imageModal, deleteModal].forEach(modal => {
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    closeImageModal();
-                    closeDeleteModal();
-                }
-            });
-        });
-
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                closeImageModal();
-                closeDeleteModal();
-            }
-        });
-
         // ==================== CARIAN, PENAPIS, EKSPORT CSV & CETAK ====================
         searchInput.addEventListener('input', renderReportsList);
         categoryFilter.addEventListener('change', renderReportsList);
@@ -1525,12 +1954,12 @@
         exportCsvBtn.addEventListener('click', () => {
             const dataToExport = getFilteredReports();
             if (dataToExport.length === 0) {
-                showToast('Tiada rekod laporan untuk dieksport.', 'warning');
+                showToast('Tiada rekod aduan untuk dieksport.', 'warning');
                 return;
             }
 
             try {
-                const headers = ['ID', 'Tarikh & Masa', 'Nama Pelapor', 'Kategori', 'Lokasi / Bilik', 'Laporan Kerosakan', 'Status', 'Status Segerak', 'Pautan Gambar'];
+                const headers = ['ID', 'Tarikh & Masa', 'Nama Pengadu', 'Kategori', 'Lokasi / Bilik', 'Aduan Kerosakan', 'Status', 'No. Rujukan DV3', 'Status Segerak', 'Pautan Gambar'];
                 const esc = (v) => `"${String(v || '').replace(/"/g, '""')}"`;
 
                 const rows = dataToExport.map(r => [
@@ -1541,6 +1970,7 @@
                     esc(r.location),
                     esc(r.description),
                     esc(r.status),
+                    esc(r.dv3Ref || ''),
                     esc(r.synced ? 'Disegerak' : 'Tempatan'),
                     esc(r.imageUrl || (r.imageBase64 ? 'Gambar Tempatan' : 'Tiada'))
                 ].join(','));
@@ -1552,7 +1982,7 @@
                 const link = document.createElement('a');
                 const today = new Date().toISOString().slice(0, 10);
                 link.href = url;
-                link.download = `Laporan_Kerosakan_PPSM_${today}.csv`;
+                link.download = `Aduan_Kerosakan_PPSM_${today}.csv`;
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
@@ -1601,13 +2031,19 @@
         // ==================== PERMULAAN APLIKASI ====================
         function initApp() {
             updateLiveDateTime();
-            setInterval(updateLiveDateTime, 1000); // Kemas kini setiap saat
+            setInterval(updateLiveDateTime, 1000);
+
+            try {
+                isAdminLoggedIn = sessionStorage.getItem(ADMIN_SESSION_KEY) === 'true';
+            } catch (err) {
+                isAdminLoggedIn = false;
+            }
 
             loadFromStorage();
+            applyRoleView();
             renderDashboard();
 
-            // Tarik rekod terkini secara automatik di latar belakang jika URL Google Sheets telah ditetapkan
-            if (googleSheetUrl) {
+            if (isAdminLoggedIn && googleSheetUrl) {
                 pullFromGoogleSheet(true);
             }
         }
