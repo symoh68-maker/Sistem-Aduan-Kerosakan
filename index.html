@@ -664,8 +664,8 @@
         // Portal DV3 USM
         const DV3_PORTAL_URL = 'https://dv3.usm.my/';
 
-        // URL Lalai Google Apps Script (Biarkan kosong jika ditetapkan melalui butang Tetapan Sheet)
-        const DEFAULT_GAS_URL = '';
+        // URL Tetap Google Apps Script (Disambung automatik untuk semua pengguna & peranti)
+        const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbzImrBev7Tc1pkS8o6cSI1NnyhVXMNXZREjWUUaOhkeditTxBeX6XWenVsDU_TY2fxYhg/exec';
 
         // ==================== PEMBOLEH UBAH KEADAAN ====================
         let reports = [];
@@ -750,7 +750,7 @@
         }
 
         function getGasUrl() {
-            return (localStorage.getItem(GAS_URL_STORAGE_KEY) || DEFAULT_GAS_URL || '').trim();
+            return DEFAULT_GAS_URL.trim();
         }
 
         function updateConnectionBadge() {
