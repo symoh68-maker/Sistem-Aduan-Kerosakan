@@ -61,16 +61,6 @@
                     <span id="sheetStatusLabel">Mod Tempatan</span>
                 </div>
 
-                <!-- Tetapan Sheet (Admin sahaja) -->
-                <button type="button" id="openSettingsBtn" onclick="openSettingsModal()"
-                    class="hidden inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-white/10 hover:bg-white/20 border border-white/20 text-white transition">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                    </svg>
-                    <span>Tetapan Sheet</span>
-                </button>
-
                 <!-- Log Masuk Admin -->
                 <button type="button" id="adminLoginNavBtn" onclick="openAdminLoginModal()"
                     class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-white text-purple-900 hover:bg-purple-50 shadow-sm transition">
@@ -535,38 +525,6 @@
         </div>
     </div>
 
-    <!-- ==================== MODAL TETAPAN GOOGLE SHEETS ==================== -->
-    <div id="settingsModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 no-print">
-        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden">
-            <div class="px-5 py-4 bg-slate-900 text-white flex items-center justify-between">
-                <h3 class="text-sm font-bold">Tetapan Google Sheets (Apps Script)</h3>
-                <button type="button" onclick="closeSettingsModal()" class="text-slate-300 hover:text-white text-sm font-bold">✕</button>
-            </div>
-            <div class="p-5 space-y-4">
-                <div>
-                    <label for="gasUrlInput" class="block text-xs font-semibold text-slate-700 mb-1.5">URL Web App Google Apps Script</label>
-                    <input type="url" id="gasUrlInput" placeholder="https://script.google.com/macros/s/.../exec"
-                        class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-xs sm:text-sm font-mono focus:border-purple-600 focus:ring-2 focus:ring-purple-500/20 outline-none">
-                    <p class="text-[11px] text-slate-500 mt-1.5">
-                        Tampal URL Web App daripada <strong>Deploy &rarr; Manage deployments</strong> di Google Apps Script anda.
-                    </p>
-                </div>
-                <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100">
-                    <button type="button" onclick="testGasConnection()"
-                        class="px-3.5 py-2 rounded-xl text-xs font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 transition">
-                        Uji Sambungan
-                    </button>
-                    <div class="flex items-center gap-2">
-                        <button type="button" onclick="closeSettingsModal()"
-                            class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition">Tutup</button>
-                        <button type="button" onclick="saveGasUrl()"
-                            class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-purple-700 hover:bg-purple-800 shadow-sm transition">Simpan URL</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- ==================== MODAL PEMBANTU KEY-IN DV3 ==================== -->
     <div id="dv3HelperModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 no-print">
         <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-xl max-h-[90vh] flex flex-col overflow-hidden">
@@ -654,7 +612,6 @@
     <script>
         // ==================== KONFIGURASI UTAMA ====================
         const STORAGE_KEY = 'ppsm_aduan_kerosakan_v2';
-        const GAS_URL_STORAGE_KEY = 'ppsm_gas_webapp_url';
         const ADMIN_SESSION_KEY = 'ppsm_admin_logged_in';
 
         // Tetapan Akaun Admin (Ubah di sini jika perlu)
@@ -687,7 +644,6 @@
         const toggleAdminFormBtnText = document.getElementById('toggleAdminFormBtnText');
         const adminLoginNavBtn = document.getElementById('adminLoginNavBtn');
         const adminLogoutNavBtn = document.getElementById('adminLogoutNavBtn');
-        const openSettingsBtn = document.getElementById('openSettingsBtn');
         const sheetStatusDot = document.getElementById('sheetStatusDot');
         const sheetStatusLabel = document.getElementById('sheetStatusLabel');
 
@@ -851,7 +807,6 @@
                 isAdminFormOpen = false;
                 mainLayoutGrid.className = 'w-full space-y-6';
                 adminDashboardSection.classList.remove('hidden');
-                openSettingsBtn.classList.remove('hidden');
                 adminLoginNavBtn.classList.add('hidden');
                 adminLogoutNavBtn.classList.remove('hidden');
                 roleBadge.textContent = 'Mod Admin';
@@ -867,7 +822,6 @@
                 formSection.className = 'no-print';
                 closeAdminFormBtn.classList.add('hidden');
                 adminDashboardSection.classList.add('hidden');
-                openSettingsBtn.classList.add('hidden');
                 adminLoginNavBtn.classList.remove('hidden');
                 adminLogoutNavBtn.classList.add('hidden');
                 roleBadge.textContent = 'Mod Pengadu';
@@ -909,27 +863,7 @@
             showToast('Anda telah log keluar daripada Mod Admin.', 'info');
         }
 
-        // ==================== TETAPAN GOOGLE SHEETS ====================
-        function openSettingsModal() {
-            document.getElementById('gasUrlInput').value = getGasUrl();
-            document.getElementById('settingsModal').classList.remove('hidden');
-        }
-
-        function closeSettingsModal() {
-            document.getElementById('settingsModal').classList.add('hidden');
-        }
-
-        function saveGasUrl() {
-            const url = document.getElementById('gasUrlInput').value.trim();
-            localStorage.setItem(GAS_URL_STORAGE_KEY, url);
-            updateConnectionBadge();
-            closeSettingsModal();
-            showToast(url ? 'URL Google Apps Script disimpan.' : 'URL dikosongkan (Mod Tempatan).', 'success');
-            if (url && isAdminLoggedIn) {
-                pullFromGoogleSheet(false);
-            }
-        }
-
+        // ==================== SAMBUNGAN GOOGLE SHEETS ====================
         function jsonpRequest(url) {
             return new Promise((resolve, reject) => {
                 const cbName = 'ppsmCb_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
@@ -960,24 +894,6 @@
             });
         }
 
-        async function testGasConnection() {
-            const url = document.getElementById('gasUrlInput').value.trim();
-            if (!url) {
-                showToast('Sila masukkan URL Web App terlebih dahulu.', 'warning');
-                return;
-            }
-            try {
-                const res = await jsonpRequest(`${url}?action=ping`);
-                if (res && res.status === 'ok') {
-                    showToast(res.message || 'Sambungan Google Sheets berjaya!', 'success');
-                } else {
-                    showToast('Respons tidak dijangka daripada Apps Script.', 'warning');
-                }
-            } catch (err) {
-                showToast(err.message || 'Gagal menghubungi Google Sheets.', 'error');
-            }
-        }
-
         async function sendPostToGas(payload) {
             const url = getGasUrl();
             if (!url) return { ok: false, skipped: true };
@@ -1003,7 +919,7 @@
         async function pullFromGoogleSheet(silent = false) {
             const url = getGasUrl();
             if (!url) {
-                if (!silent) showToast('Sila tetapkan URL Google Sheets melalui butang Tetapan Sheet.', 'warning');
+                if (!silent) showToast('URL Google Sheets belum ditetapkan.', 'warning');
                 return;
             }
 
