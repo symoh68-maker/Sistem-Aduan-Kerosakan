@@ -107,19 +107,14 @@
                             <span id="roleBadge" class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-purple-100 text-purple-800 border border-purple-200">
                                 Mod Pengadu
                             </span>
-                            <button type="button" id="closeAdminFormBtn" onclick="toggleAdminForm(false)"
-                                class="hidden inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-600 hover:text-rose-700 hover:bg-rose-50 border border-slate-200 transition">
-                                <span>Tutup Borang</span>
-                                <span>✕</span>
-                            </button>
                         </div>
                     </div>
 
                     <!-- Isi Borang Aduan -->
                     <form id="reportForm" class="p-5 sm:p-6 space-y-4">
-                        <!-- Tarikh & Masa (Automatik) -->
+                        <!-- Tarikh & Masa -->
                         <div>
-                            <label for="dateTimeInput" class="block text-xs font-semibold text-slate-700 mb-1.5">Tarikh &amp; Masa (Automatik)</label>
+                            <label for="dateTimeInput" class="block text-xs font-semibold text-slate-700 mb-1.5">Tarikh &amp; Masa</label>
                             <input type="text" id="dateTimeInput" readonly
                                 class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-mono text-slate-600 outline-none cursor-default">
                         </div>
@@ -229,16 +224,9 @@
                                 Papan Pemuka Analitik Admin
                             </div>
                             <h2 class="text-base sm:text-lg font-bold tracking-tight text-white">Ringkasan Penyelenggaraan &amp; Integrasi DV3</h2>
-                            <p id="lastSyncBadge" class="text-xs text-slate-300 mt-0.5">Sedia disegerak dengan Google Sheets</p>
+                            <p id="lastSyncBadge" class="text-xs text-slate-300 mt-0.5">Data dikemas kini secara automatik daripada Google Sheets</p>
                         </div>
                         <div class="flex flex-wrap items-center gap-2 self-start sm:self-center">
-                            <button type="button" id="toggleAdminFormBtn" onclick="toggleAdminForm()"
-                                class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white text-purple-900 hover:bg-purple-50 text-xs font-bold shadow-sm transition">
-                                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                                </svg>
-                                <span id="toggleAdminFormBtnText">Tambah Aduan</span>
-                            </button>
                             <button type="button" onclick="quickFilterDv3('Belum')"
                                 class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-amber-400/15 hover:bg-amber-400/25 border border-amber-300/30 text-amber-100 text-xs font-semibold transition">
                                 <svg class="w-4 h-4 text-amber-300 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -387,17 +375,6 @@
                         </div>
 
                         <div class="flex flex-wrap items-center gap-2">
-                            <button type="button" id="pullSheetBtn" onclick="pullFromGoogleSheet(false)"
-                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 transition disabled:opacity-60">
-                                <svg id="pullSheetIcon" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-                                </svg>
-                                <span id="pullSheetText">Tarik dari Sheet</span>
-                            </button>
-                            <button type="button" id="exportCsvBtn"
-                                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-purple-800 bg-purple-50 border border-purple-200 hover:bg-purple-100 transition">
-                                <span>Eksport CSV</span>
-                            </button>
                             <button type="button" id="printBtn"
                                 class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 transition">
                                 <span>Cetak</span>
@@ -631,7 +608,6 @@
         let activeDv3HelperId = null;
         let dv3HelperFieldValues = {};
         let isAdminLoggedIn = false;
-        let isAdminFormOpen = false;
         let currentViewMode = 'cards';
 
         // ==================== RUJUKAN ELEMEN DOM ====================
@@ -639,9 +615,6 @@
         const formSection = document.getElementById('formSection');
         const adminDashboardSection = document.getElementById('adminDashboardSection');
         const roleBadge = document.getElementById('roleBadge');
-        const closeAdminFormBtn = document.getElementById('closeAdminFormBtn');
-        const toggleAdminFormBtn = document.getElementById('toggleAdminFormBtn');
-        const toggleAdminFormBtnText = document.getElementById('toggleAdminFormBtnText');
         const adminLoginNavBtn = document.getElementById('adminLoginNavBtn');
         const adminLogoutNavBtn = document.getElementById('adminLogoutNavBtn');
         const sheetStatusDot = document.getElementById('sheetStatusDot');
@@ -680,10 +653,6 @@
         const filteredCountBadge = document.getElementById('filteredCountBadge');
         const viewModeCardBtn = document.getElementById('viewModeCardBtn');
         const viewModeTableBtn = document.getElementById('viewModeTableBtn');
-        const pullSheetBtn = document.getElementById('pullSheetBtn');
-        const pullSheetIcon = document.getElementById('pullSheetIcon');
-        const pullSheetText = document.getElementById('pullSheetText');
-        const exportCsvBtn = document.getElementById('exportCsvBtn');
         const printBtn = document.getElementById('printBtn');
         const searchInput = document.getElementById('searchInput');
         const categoryFilter = document.getElementById('categoryFilter');
@@ -780,47 +749,22 @@
         }
 
         // ==================== KAWALAN AKAUN ADMIN VS PENGGUNA ====================
-        function updateAdminFormVisibility() {
-            if (!isAdminLoggedIn) return;
-            if (isAdminFormOpen) {
-                formSection.className = 'max-w-3xl mx-auto no-print';
-                closeAdminFormBtn.classList.remove('hidden');
-                if (toggleAdminFormBtnText) toggleAdminFormBtnText.textContent = 'Tutup Borang';
-            } else {
-                formSection.className = 'hidden no-print';
-                closeAdminFormBtn.classList.add('hidden');
-                if (toggleAdminFormBtnText) toggleAdminFormBtnText.textContent = 'Tambah Aduan';
-            }
-        }
-
-        function toggleAdminForm(forceState) {
-            if (!isAdminLoggedIn) return;
-            isAdminFormOpen = typeof forceState === 'boolean' ? forceState : !isAdminFormOpen;
-            updateAdminFormVisibility();
-            if (isAdminFormOpen) {
-                formSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-        }
-
         function applyRoleView() {
             if (isAdminLoggedIn) {
-                isAdminFormOpen = false;
                 mainLayoutGrid.className = 'w-full space-y-6';
+                formSection.className = 'hidden no-print';
                 adminDashboardSection.classList.remove('hidden');
                 adminLoginNavBtn.classList.add('hidden');
                 adminLogoutNavBtn.classList.remove('hidden');
                 roleBadge.textContent = 'Mod Admin';
                 roleBadge.className = 'px-2.5 py-1 rounded-full text-[11px] font-bold bg-indigo-100 text-indigo-800 border border-indigo-200';
-                updateAdminFormVisibility();
                 renderDashboard();
                 if (getGasUrl()) {
                     pullFromGoogleSheet(true);
                 }
             } else {
-                isAdminFormOpen = false;
                 mainLayoutGrid.className = 'max-w-2xl mx-auto';
                 formSection.className = 'no-print';
-                closeAdminFormBtn.classList.add('hidden');
                 adminDashboardSection.classList.add('hidden');
                 adminLoginNavBtn.classList.remove('hidden');
                 adminLogoutNavBtn.classList.add('hidden');
@@ -923,10 +867,6 @@
                 return;
             }
 
-            pullSheetBtn.disabled = true;
-            pullSheetIcon.classList.add('animate-spin');
-            pullSheetText.textContent = 'Menarik...';
-
             try {
                 const res = await jsonpRequest(`${url}?action=getAll`);
                 if (!res || res.status !== 'ok' || !Array.isArray(res.data)) {
@@ -955,7 +895,7 @@
 
                 if (lastSyncBadge) {
                     const nowTime = new Date().toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-                    lastSyncBadge.textContent = `Disegerak dengan Google Sheets pada ${nowTime}`;
+                    lastSyncBadge.textContent = `Dikemas kini daripada Google Sheets pada ${nowTime}`;
                 }
                 if (!silent) {
                     showToast(`Berjaya menarik ${remoteReports.length} rekod dari Google Sheets.`, 'success');
@@ -963,10 +903,6 @@
             } catch (err) {
                 console.error(err);
                 if (!silent) showToast(err.message || 'Gagal menarik data dari Google Sheets.', 'error');
-            } finally {
-                pullSheetBtn.disabled = false;
-                pullSheetIcon.classList.remove('animate-spin');
-                pullSheetText.textContent = 'Tarik dari Sheet';
             }
         }
 
@@ -1244,7 +1180,7 @@
                 emptyState.classList.remove('hidden');
                 emptyStateSubtext.textContent = reports.length > 0
                     ? 'Tiada aduan yang sepadan dengan carian atau penapis yang dipilih.'
-                    : 'Belum ada aduan kerosakan direkodkan. Klik "+ Tambah Aduan" di atas untuk merekodkan aduan baharu.';
+                    : 'Belum ada aduan kerosakan direkodkan buat masa ini.';
                 return;
             }
 
@@ -1387,7 +1323,7 @@
                             </div>
                         </div>
 
-                        <!-- Baris Bawah: Status, Segerak & Padam -->
+                        <!-- Baris Bawah: Status & Padam -->
                         <div class="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 no-print">
                             <div class="flex items-center gap-2">
                                 <label class="text-xs font-semibold text-slate-500">Status:</label>
@@ -1397,11 +1333,6 @@
                                     <option value="Dalam Tindakan" ${report.status === 'Dalam Tindakan' ? 'selected' : ''}>Dalam Tindakan</option>
                                     <option value="Selesai" ${report.status === 'Selesai' ? 'selected' : ''}>Selesai</option>
                                 </select>
-
-                                ${report.synced
-                                    ? `<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">Disegerak</span>`
-                                    : `<button type="button" onclick="resyncReport('${safeId}')" class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 transition">Tempatan • Segerak Semula</button>`
-                                }
                             </div>
 
                             <button type="button" onclick="openDeleteModal('${safeId}')"
@@ -1636,7 +1567,7 @@
             }
         }
 
-        // ==================== CARIAN, PENAPIS, EKSPORT CSV & CETAK ====================
+        // ==================== CARIAN, PENAPIS & CETAK ====================
         searchInput.addEventListener('input', renderReportsList);
         categoryFilter.addEventListener('change', () => {
             updateStats();
@@ -1644,30 +1575,6 @@
         });
         statusFilter.addEventListener('change', renderReportsList);
         dv3Filter.addEventListener('change', renderReportsList);
-
-        exportCsvBtn.addEventListener('click', function() {
-            const list = getFilteredReports();
-            if (list.length === 0) {
-                showToast('Tiada rekod untuk dieksport.', 'warning');
-                return;
-            }
-            const headers = ['ID', 'Tarikh & Masa', 'Nama Pengadu', 'Kategori', 'Lokasi', 'Butiran Kerosakan', 'Status', 'No. Rujukan DV3', 'Pautan Gambar'];
-            const csvEscape = (v) => `"${String(v || '').replace(/"/g, '""')}"`;
-            const rows = [
-                headers.map(csvEscape).join(','),
-                ...list.map(r => [
-                    r.id, r.dateTime, r.reporterName, r.category, r.location, r.description, r.status, r.dv3Ref || '', r.imageUrl || ''
-                ].map(csvEscape).join(','))
-            ];
-            const blob = new Blob(['\uFEFF' + rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `aduan_kerosakan_ppsm_${new Date().toISOString().slice(0, 10)}.csv`;
-            a.click();
-            URL.revokeObjectURL(url);
-            showToast('Fail CSV berjaya dimuat turun.', 'success');
-        });
 
         printBtn.addEventListener('click', () => window.print());
 
