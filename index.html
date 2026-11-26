@@ -3,18 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Aduan Kerosakan — PPSM, USM</title>
+    <title>Math QuickFix — Sistem Aduan Kerosakan, USM</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class'
+        };
+    </script>
     <style>
         body {
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            transition: background-color 0.25s ease, color 0.25s ease;
         }
         .donut-ring {
             transition: stroke-dashoffset 0.6s ease;
         }
+
+        /* ==================== GAYA MOD GELAP (DARK MODE) ==================== */
+        html.dark body {
+            background-color: #0b1120;
+            color: #f1f5f9;
+        }
+        html.dark .bg-white {
+            background-color: #111827 !important;
+        }
+        html.dark .bg-slate-50,
+        html.dark .bg-slate-50\/50,
+        html.dark .bg-slate-100 {
+            background-color: #1e293b !important;
+        }
+        html.dark .from-purple-50.to-indigo-50 {
+            background-image: linear-gradient(to right, rgba(88, 28, 135, 0.28), rgba(49, 46, 129, 0.28)) !important;
+        }
+        html.dark .border-slate-200,
+        html.dark .border-slate-200\/80,
+        html.dark .border-slate-100,
+        html.dark .border-slate-300,
+        html.dark .border-purple-100 {
+            border-color: #334155 !important;
+        }
+        html.dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]) {
+            border-color: #1e293b !important;
+        }
+        html.dark .text-slate-900,
+        html.dark .text-slate-800 {
+            color: #f1f5f9 !important;
+        }
+        html.dark .text-slate-700 {
+            color: #cbd5e1 !important;
+        }
+        html.dark .text-slate-600,
+        html.dark .text-slate-500 {
+            color: #94a3b8 !important;
+        }
+        html.dark input,
+        html.dark select,
+        html.dark textarea {
+            background-color: #0f172a !important;
+            color: #f8fafc !important;
+            border-color: #334155 !important;
+        }
+        html.dark input::placeholder,
+        html.dark textarea::placeholder {
+            color: #64748b !important;
+        }
+        html.dark #donutTrackCircle {
+            stroke: #1e293b;
+        }
+        html.dark .hover\:bg-slate-50:hover,
+        html.dark .hover\:bg-slate-50\/80:hover,
+        html.dark .hover\:bg-slate-100:hover {
+            background-color: #1e293b !important;
+        }
+
         @media print {
             .no-print {
                 display: none !important;
@@ -30,6 +94,7 @@
             }
             body {
                 background: #ffffff !important;
+                color: #0f172a !important;
             }
         }
     </style>
@@ -48,8 +113,8 @@
                     </svg>
                 </div>
                 <div class="min-w-0">
-                    <h1 class="text-sm sm:text-base font-extrabold tracking-tight text-white truncate">Sistem Aduan Kerosakan PPSM</h1>
-                    <p class="text-[11px] sm:text-xs text-purple-200 truncate">Pusat Pengajian Sains Matematik, USM</p>
+                    <h1 id="appTitleText" class="text-sm sm:text-base font-extrabold tracking-tight text-white truncate">Math QuickFix</h1>
+                    <p id="appSubtitleText" class="text-[11px] sm:text-xs text-purple-200 truncate">Pusat Pengajian Sains Matematik, USM</p>
                 </div>
             </div>
 
@@ -61,13 +126,33 @@
                     <span id="sheetStatusLabel">Mod Tempatan</span>
                 </div>
 
+                <!-- Butang Dwi Bahasa (BM / EN) -->
+                <button type="button" id="langToggleBtn" onclick="toggleLanguage()" title="Tukar Bahasa / Switch Language"
+                    class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 border border-white/20 text-white transition">
+                    <svg class="w-3.5 h-3.5 text-purple-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/>
+                    </svg>
+                    <span id="langToggleLabel">BM | EN</span>
+                </button>
+
+                <!-- Butang Mod Gelap (Dark Mode) -->
+                <button type="button" id="darkModeToggleBtn" onclick="toggleDarkMode()" title="Mod Gelap / Dark Mode"
+                    class="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-purple-100 transition">
+                    <svg id="darkIconMoon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                    </svg>
+                    <svg id="darkIconSun" class="hidden w-4 h-4 text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+                    </svg>
+                </button>
+
                 <!-- Log Masuk Admin -->
                 <button type="button" id="adminLoginNavBtn" onclick="openAdminLoginModal()"
                     class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-white text-purple-900 hover:bg-purple-50 shadow-sm transition">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                     </svg>
-                    <span>Log Masuk Admin</span>
+                    <span data-i18n="adminLogin">Log Masuk Admin</span>
                 </button>
 
                 <!-- Log Keluar Admin -->
@@ -76,7 +161,7 @@
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
                     </svg>
-                    <span>Log Keluar</span>
+                    <span data-i18n="logout">Log Keluar</span>
                 </button>
             </div>
         </div>
@@ -99,8 +184,8 @@
                                 </svg>
                             </span>
                             <div>
-                                <h2 class="text-base font-bold text-slate-900">Borang Aduan Kerosakan</h2>
-                                <p class="text-xs text-slate-500">Lengkapkan maklumat di bawah untuk tindakan penyelenggaraan</p>
+                                <h2 class="text-base font-bold text-slate-900" data-i18n="formTitle">Borang Aduan Kerosakan</h2>
+                                <p class="text-xs text-slate-500" data-i18n="formSubtitle">Lengkapkan maklumat di bawah untuk tindakan penyelenggaraan</p>
                             </div>
                         </div>
                         <div class="flex items-center gap-2 shrink-0">
@@ -114,7 +199,7 @@
                     <form id="reportForm" class="p-5 sm:p-6 space-y-4">
                         <!-- Tarikh & Masa -->
                         <div>
-                            <label for="dateTimeInput" class="block text-xs font-semibold text-slate-700 mb-1.5">Tarikh &amp; Masa</label>
+                            <label for="dateTimeInput" class="block text-xs font-semibold text-slate-700 mb-1.5" data-i18n="labelDateTime">Tarikh &amp; Masa</label>
                             <input type="text" id="dateTimeInput" readonly
                                 class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm font-mono text-slate-600 outline-none cursor-default">
                         </div>
@@ -122,7 +207,7 @@
                         <!-- Nama Pengadu -->
                         <div>
                             <label for="reporterNameInput" class="block text-xs font-semibold text-slate-700 mb-1.5">
-                                Nama Pengadu <span class="text-rose-500">*</span>
+                                <span data-i18n="labelReporter">Nama Pengadu</span> <span class="text-rose-500">*</span>
                             </label>
                             <input type="text" id="reporterNameInput" required placeholder="Contoh: Dr. Ahmad / Pn. Siti"
                                 class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-purple-600 focus:ring-2 focus:ring-purple-500/20 outline-none transition">
@@ -132,21 +217,21 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label for="categoryInput" class="block text-xs font-semibold text-slate-700 mb-1.5">
-                                    Kategori Kerosakan <span class="text-rose-500">*</span>
+                                    <span data-i18n="labelCategory">Kategori Kerosakan</span> <span class="text-rose-500">*</span>
                                 </label>
                                 <select id="categoryInput" required
                                     class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 focus:border-purple-600 focus:ring-2 focus:ring-purple-500/20 outline-none transition">
-                                    <option value="Elektrik & Lampu">Elektrik &amp; Lampu</option>
-                                    <option value="Penghawa Dingin">Penghawa Dingin</option>
-                                    <option value="Perabot & Kelengkapan">Perabot &amp; Kelengkapan</option>
-                                    <option value="Paip & Sanitari">Paip &amp; Sanitari</option>
-                                    <option value="Bangunan & Awam">Bangunan &amp; Awam</option>
-                                    <option value="Lain-lain">Lain-lain</option>
+                                    <option value="Elektrik & Lampu" data-cat-opt="Elektrik & Lampu">Elektrik &amp; Lampu</option>
+                                    <option value="Penghawa Dingin" data-cat-opt="Penghawa Dingin">Penghawa Dingin</option>
+                                    <option value="Perabot & Kelengkapan" data-cat-opt="Perabot & Kelengkapan">Perabot &amp; Kelengkapan</option>
+                                    <option value="Paip & Sanitari" data-cat-opt="Paip & Sanitari">Paip &amp; Sanitari</option>
+                                    <option value="Bangunan & Awam" data-cat-opt="Bangunan & Awam">Bangunan &amp; Awam</option>
+                                    <option value="Lain-lain" data-cat-opt="Lain-lain">Lain-lain</option>
                                 </select>
                             </div>
                             <div>
                                 <label for="locationInput" class="block text-xs font-semibold text-slate-700 mb-1.5">
-                                    Lokasi / Bilik <span class="text-rose-500">*</span>
+                                    <span data-i18n="labelLocation">Lokasi / Bilik</span> <span class="text-rose-500">*</span>
                                 </label>
                                 <input type="text" id="locationInput" required placeholder="Contoh: Bilik C02, Makmal 3"
                                     class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-purple-600 focus:ring-2 focus:ring-purple-500/20 outline-none transition">
@@ -156,7 +241,7 @@
                         <!-- Butiran Kerosakan -->
                         <div>
                             <label for="descriptionInput" class="block text-xs font-semibold text-slate-700 mb-1.5">
-                                Butiran Aduan Kerosakan <span class="text-rose-500">*</span>
+                                <span data-i18n="labelDescription">Butiran Aduan Kerosakan</span> <span class="text-rose-500">*</span>
                             </label>
                             <textarea id="descriptionInput" rows="4" required
                                 placeholder="Nyatakan kerosakan secara terperinci (contoh: Lampu siling berkelip-kelip dan tidak menyala di bahagian hadapan bilik)..."
@@ -166,7 +251,7 @@
                         <!-- Muat Naik Gambar (Pilihan) -->
                         <div>
                             <label for="imageInput" class="block text-xs font-semibold text-slate-700 mb-1.5">
-                                Muat Naik Gambar Kerosakan <span class="text-slate-400 font-normal">(Pilihan)</span>
+                                <span data-i18n="labelImage">Muat Naik Gambar Kerosakan</span> <span class="text-slate-400 font-normal" data-i18n="labelOptional">(Pilihan)</span>
                             </label>
                             <input type="file" id="imageInput" accept="image/*"
                                 class="block w-full text-xs sm:text-sm text-slate-600 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-purple-50 file:text-purple-800 hover:file:bg-purple-100 border border-slate-300 rounded-xl p-1.5 cursor-pointer transition">
@@ -190,7 +275,7 @@
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
                                 </svg>
-                                <span id="submitBtnText">Hantar Aduan</span>
+                                <span id="submitBtnText" data-i18n="submitBtn">Hantar Aduan</span>
                             </button>
                         </div>
 
@@ -201,7 +286,7 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
                                 <div class="text-xs">
-                                    <p class="font-bold text-emerald-900">Aduan Anda Telah Diterima!</p>
+                                    <p class="font-bold text-emerald-900" data-i18n="submitSuccessTitle">Aduan Anda Telah Diterima!</p>
                                     <p id="submitSuccessDetail" class="text-emerald-700 mt-0.5"></p>
                                 </div>
                             </div>
@@ -221,10 +306,10 @@
                         <div>
                             <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-white/10 text-purple-200 border border-white/15 mb-1.5">
                                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                                Papan Pemuka Analitik Admin
+                                <span data-i18n="adminBannerBadge">Papan Pemuka Analitik Admin</span>
                             </div>
-                            <h2 class="text-base sm:text-lg font-bold tracking-tight text-white">Ringkasan Penyelenggaraan &amp; Integrasi DV3</h2>
-                            <p id="lastSyncBadge" class="text-xs text-slate-300 mt-0.5">Data dikemas kini secara automatik daripada Google Sheets</p>
+                            <h2 class="text-base sm:text-lg font-bold tracking-tight text-white" data-i18n="adminBannerTitle">Ringkasan Penyelenggaraan &amp; Integrasi DV3</h2>
+                            <p id="lastSyncBadge" class="text-xs text-slate-300 mt-0.5" data-i18n="adminBannerSub">Data dikemas kini secara automatik daripada Google Sheets</p>
                         </div>
                         <div class="flex flex-wrap items-center gap-2 self-start sm:self-center">
                             <button type="button" onclick="quickFilterDv3('Belum')"
@@ -232,7 +317,7 @@
                                 <svg class="w-4 h-4 text-amber-300 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
-                                <span>Belum Key-In DV3: <strong id="pendingDv3BannerCount" class="text-white text-sm ml-0.5">0</strong></span>
+                                <span><span data-i18n="pendingDv3Label">Belum Key-In DV3:</span> <strong id="pendingDv3BannerCount" class="text-white text-sm ml-0.5">0</strong></span>
                             </button>
                         </div>
                     </div>
@@ -243,7 +328,7 @@
                     <button type="button" onclick="quickFilterStatus('Semua')"
                         class="text-left bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm hover:shadow-md hover:border-purple-300 hover:-translate-y-0.5 transition-all group print-card">
                         <div class="flex items-center justify-between">
-                            <span class="text-xs font-semibold text-slate-500">Jumlah</span>
+                            <span class="text-xs font-semibold text-slate-500" data-i18n="kpiTotal">Jumlah</span>
                             <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-600 to-indigo-600 text-white flex items-center justify-center shadow-sm group-hover:scale-105 transition no-print">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -259,7 +344,7 @@
                     <button type="button" onclick="quickFilterStatus('Baru')"
                         class="text-left bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm hover:shadow-md hover:border-amber-300 hover:-translate-y-0.5 transition-all group print-card">
                         <div class="flex items-center justify-between">
-                            <span class="text-xs font-semibold text-slate-500">Baru</span>
+                            <span class="text-xs font-semibold text-slate-500" data-i18n="kpiNew">Baru</span>
                             <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-white flex items-center justify-center shadow-sm group-hover:scale-105 transition no-print">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -275,7 +360,7 @@
                     <button type="button" onclick="quickFilterStatus('Dalam Tindakan')"
                         class="text-left bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm hover:shadow-md hover:border-blue-300 hover:-translate-y-0.5 transition-all group print-card">
                         <div class="flex items-center justify-between">
-                            <span class="text-xs font-semibold text-slate-500">Tindakan</span>
+                            <span class="text-xs font-semibold text-slate-500" data-i18n="kpiInProgress">Tindakan</span>
                             <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-600 text-white flex items-center justify-center shadow-sm group-hover:scale-105 transition no-print">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
@@ -291,7 +376,7 @@
                     <button type="button" onclick="quickFilterStatus('Selesai')"
                         class="text-left bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm hover:shadow-md hover:border-emerald-300 hover:-translate-y-0.5 transition-all group print-card">
                         <div class="flex items-center justify-between">
-                            <span class="text-xs font-semibold text-slate-500">Selesai</span>
+                            <span class="text-xs font-semibold text-slate-500" data-i18n="kpiCompleted">Selesai</span>
                             <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-sm group-hover:scale-105 transition no-print">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -310,21 +395,21 @@
                     <!-- Kad 1: Prestasi Penyelesaian & Kemajuan DV3 -->
                     <div class="md:col-span-5 bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-sm flex flex-col justify-between gap-4">
                         <div class="flex items-center justify-between">
-                            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500">Prestasi Penyelesaian</h3>
-                            <span class="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">Langsung</span>
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500" data-i18n="analyticsResolution">Prestasi Penyelesaian</h3>
+                            <span class="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100" data-i18n="liveTag">Langsung</span>
                         </div>
 
                         <div class="flex items-center gap-4">
                             <!-- Carta Donut SVG -->
                             <div class="relative w-24 h-24 shrink-0">
                                 <svg class="w-24 h-24 -rotate-90" viewBox="0 0 96 96" aria-hidden="true">
-                                    <circle cx="48" cy="48" r="36" fill="none" stroke="#f1f5f9" stroke-width="9"></circle>
+                                    <circle id="donutTrackCircle" cx="48" cy="48" r="36" fill="none" stroke="#f1f5f9" stroke-width="9"></circle>
                                     <circle id="donutProgressCircle" cx="48" cy="48" r="36" fill="none" stroke="#10b981" stroke-width="9"
                                         stroke-linecap="round" stroke-dasharray="226.2" stroke-dashoffset="226.2" class="donut-ring"></circle>
                                 </svg>
                                 <div class="absolute inset-0 flex flex-col items-center justify-center">
                                     <span id="donutPercentText" class="text-lg font-extrabold text-slate-900">0%</span>
-                                    <span class="text-[10px] font-medium text-slate-400">Selesai</span>
+                                    <span class="text-[10px] font-medium text-slate-400" data-i18n="kpiCompleted">Selesai</span>
                                 </div>
                             </div>
                             <div class="min-w-0 flex-1 space-y-2">
@@ -332,10 +417,10 @@
                                 <!-- Kemajuan Key-In DV3 -->
                                 <div class="pt-1">
                                     <div class="flex items-center justify-between text-[11px] mb-1">
-                                        <span class="font-semibold text-indigo-800">Kemajuan Key-In DV3</span>
-                                        <span id="dv3ProgressText" class="font-bold text-indigo-700">0/0 (0%)</span>
+                                        <span class="font-semibold text-indigo-800 dark:text-indigo-300" data-i18n="dv3ProgressLabel">Kemajuan Key-In DV3</span>
+                                        <span id="dv3ProgressText" class="font-bold text-indigo-700 dark:text-indigo-300">0/0 (0%)</span>
                                     </div>
-                                    <div class="w-full h-2 rounded-full bg-indigo-100 overflow-hidden">
+                                    <div class="w-full h-2 rounded-full bg-indigo-100 dark:bg-slate-800 overflow-hidden">
                                         <div id="dv3ProgressBar" class="h-full rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 transition-all duration-500" style="width: 0%"></div>
                                     </div>
                                 </div>
@@ -346,8 +431,8 @@
                     <!-- Kad 2: Taburan Kategori Kerosakan -->
                     <div class="md:col-span-7 bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-sm flex flex-col justify-between gap-3">
                         <div class="flex items-center justify-between">
-                            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500">Taburan Kategori Kerosakan</h3>
-                            <span class="text-[11px] text-slate-400">Klik kategori untuk tapis</span>
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500" data-i18n="categoryBreakdown">Taburan Kategori Kerosakan</h3>
+                            <span class="text-[11px] text-slate-400" data-i18n="clickToFilter">Klik kategori untuk tapis</span>
                         </div>
                         <div id="categoryBreakdownList" class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5"></div>
                     </div>
@@ -358,17 +443,17 @@
                     <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100">
                         <div class="flex items-center gap-2.5">
                             <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2">
-                                <span>Rekod Aduan</span>
+                                <span data-i18n="recordsTitle">Rekod Aduan</span>
                                 <span id="filteredCountBadge" class="px-2 py-0.5 text-xs font-bold rounded-full bg-purple-100 text-purple-800">0</span>
                             </h3>
                             <!-- Tukar Paparan Kad / Jadual -->
                             <div class="inline-flex items-center rounded-xl bg-slate-100 p-0.5 border border-slate-200">
                                 <button type="button" id="viewModeCardBtn" onclick="setViewMode('cards')"
-                                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-white text-purple-800 shadow-sm transition">
+                                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-white text-purple-800 shadow-sm transition" data-i18n="viewCards">
                                     Kad
                                 </button>
                                 <button type="button" id="viewModeTableBtn" onclick="setViewMode('table')"
-                                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-500 hover:text-slate-800 transition">
+                                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-slate-500 hover:text-slate-800 transition" data-i18n="viewTable">
                                     Jadual
                                 </button>
                             </div>
@@ -377,7 +462,7 @@
                         <div class="flex flex-wrap items-center gap-2">
                             <button type="button" id="printBtn"
                                 class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 transition">
-                                <span>Cetak</span>
+                                <span data-i18n="printBtn">Cetak</span>
                             </button>
                         </div>
                     </div>
@@ -398,32 +483,32 @@
                         <div class="sm:col-span-3">
                             <select id="categoryFilter"
                                 class="w-full rounded-xl border border-slate-300 bg-slate-50/50 px-3 py-2 text-xs sm:text-sm font-medium text-slate-700 focus:bg-white focus:border-purple-600 outline-none transition">
-                                <option value="Semua">Semua Kategori</option>
-                                <option value="Elektrik & Lampu">Elektrik &amp; Lampu</option>
-                                <option value="Penghawa Dingin">Penghawa Dingin</option>
-                                <option value="Perabot & Kelengkapan">Perabot &amp; Kelengkapan</option>
-                                <option value="Paip & Sanitari">Paip &amp; Sanitari</option>
-                                <option value="Bangunan & Awam">Bangunan &amp; Awam</option>
-                                <option value="Lain-lain">Lain-lain</option>
+                                <option value="Semua" data-i18n="allCategories">Semua Kategori</option>
+                                <option value="Elektrik & Lampu" data-cat-opt="Elektrik & Lampu">Elektrik &amp; Lampu</option>
+                                <option value="Penghawa Dingin" data-cat-opt="Penghawa Dingin">Penghawa Dingin</option>
+                                <option value="Perabot & Kelengkapan" data-cat-opt="Perabot & Kelengkapan">Perabot &amp; Kelengkapan</option>
+                                <option value="Paip & Sanitari" data-cat-opt="Paip & Sanitari">Paip &amp; Sanitari</option>
+                                <option value="Bangunan & Awam" data-cat-opt="Bangunan & Awam">Bangunan &amp; Awam</option>
+                                <option value="Lain-lain" data-cat-opt="Lain-lain">Lain-lain</option>
                             </select>
                         </div>
 
                         <div class="sm:col-span-3">
                             <select id="statusFilter"
                                 class="w-full rounded-xl border border-slate-300 bg-slate-50/50 px-3 py-2 text-xs sm:text-sm font-medium text-slate-700 focus:bg-white focus:border-purple-600 outline-none transition">
-                                <option value="Semua">Semua Status</option>
-                                <option value="Baru">Baru</option>
-                                <option value="Dalam Tindakan">Dalam Tindakan</option>
-                                <option value="Selesai">Selesai</option>
+                                <option value="Semua" data-i18n="allStatuses">Semua Status</option>
+                                <option value="Baru" data-stat-opt="Baru">Baru</option>
+                                <option value="Dalam Tindakan" data-stat-opt="Dalam Tindakan">Dalam Tindakan</option>
+                                <option value="Selesai" data-stat-opt="Selesai">Selesai</option>
                             </select>
                         </div>
 
                         <div class="sm:col-span-2">
                             <select id="dv3Filter"
                                 class="w-full rounded-xl border border-slate-300 bg-slate-50/50 px-2.5 py-2 text-xs sm:text-sm font-medium text-slate-700 focus:bg-white focus:border-indigo-600 outline-none transition">
-                                <option value="Semua">DV3: Semua</option>
-                                <option value="Belum">Belum DV3</option>
-                                <option value="Sudah">Sudah DV3</option>
+                                <option value="Semua" data-i18n="dv3All">DV3: Semua</option>
+                                <option value="Belum" data-i18n="dv3Pending">Belum DV3</option>
+                                <option value="Sudah" data-i18n="dv3Done">Sudah DV3</option>
                             </select>
                         </div>
                     </div>
@@ -438,11 +523,11 @@
                         <table class="w-full text-left border-collapse text-xs sm:text-sm">
                             <thead>
                                 <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                                    <th class="py-3 px-3.5">ID &amp; Tarikh</th>
-                                    <th class="py-3 px-3.5">Pengadu &amp; Lokasi</th>
-                                    <th class="py-3 px-3.5">Kategori &amp; Kerosakan</th>
-                                    <th class="py-3 px-3.5">Status</th>
-                                    <th class="py-3 px-3.5">DV3 &amp; Tindakan</th>
+                                    <th class="py-3 px-3.5" data-i18n="thIdDate">ID &amp; Tarikh</th>
+                                    <th class="py-3 px-3.5" data-i18n="thReporterLoc">Pengadu &amp; Lokasi</th>
+                                    <th class="py-3 px-3.5" data-i18n="thCatDesc">Kategori &amp; Kerosakan</th>
+                                    <th class="py-3 px-3.5" data-i18n="thStatus">Status</th>
+                                    <th class="py-3 px-3.5" data-i18n="thDv3Action">DV3 &amp; Tindakan</th>
                                 </tr>
                             </thead>
                             <tbody id="reportsTableBody" class="divide-y divide-slate-100"></tbody>
@@ -457,7 +542,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                         </svg>
                     </div>
-                    <h4 class="text-sm font-bold text-slate-800">Tiada Rekod Aduan</h4>
+                    <h4 class="text-sm font-bold text-slate-800" data-i18n="emptyTitle">Tiada Rekod Aduan</h4>
                     <p id="emptyStateSubtext" class="text-xs text-slate-500 mt-1 max-w-sm mx-auto">
                         Belum ada aduan kerosakan direkodkan buat masa ini.
                     </p>
@@ -468,35 +553,35 @@
 
     <!-- ==================== PENGAKHIR HALAMAN (FOOTER) ==================== -->
     <footer class="py-4 text-center text-xs text-slate-500 border-t border-slate-200 bg-white no-print">
-        &copy; <span id="footerYear"></span> Sistem Aduan Kerosakan — Pusat Pengajian Sains Matematik (PPSM), USM.
+        &copy; <span id="footerYear"></span> <span data-i18n="footerText">Math QuickFix — Pusat Pengajian Sains Matematik (PPSM), USM.</span>
     </footer>
 
     <!-- ==================== MODAL LOG MASUK ADMIN ==================== -->
     <div id="adminLoginModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 no-print">
         <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-sm overflow-hidden">
             <div class="px-5 py-4 bg-gradient-to-r from-purple-900 to-indigo-900 text-white flex items-center justify-between">
-                <h3 class="text-sm font-bold">Log Masuk Admin PPSM</h3>
+                <h3 class="text-sm font-bold" data-i18n="modalLoginTitle">Log Masuk Admin PPSM</h3>
                 <button type="button" onclick="closeAdminLoginModal()" class="text-purple-200 hover:text-white text-sm font-bold">✕</button>
             </div>
             <form id="adminLoginForm" class="p-5 space-y-4">
                 <div>
-                    <label for="adminUsernameInput" class="block text-xs font-semibold text-slate-700 mb-1">Nama Pengguna</label>
+                    <label for="adminUsernameInput" class="block text-xs font-semibold text-slate-700 mb-1" data-i18n="usernameLabel">Nama Pengguna</label>
                     <input type="text" id="adminUsernameInput" required autocomplete="username" placeholder="admin"
                         class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:border-purple-600 focus:ring-2 focus:ring-purple-500/20 outline-none">
                 </div>
                 <div>
-                    <label for="adminPasswordInput" class="block text-xs font-semibold text-slate-700 mb-1">Kata Laluan</label>
+                    <label for="adminPasswordInput" class="block text-xs font-semibold text-slate-700 mb-1" data-i18n="passwordLabel">Kata Laluan</label>
                     <input type="password" id="adminPasswordInput" required autocomplete="current-password" placeholder="••••••••"
                         class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:border-purple-600 focus:ring-2 focus:ring-purple-500/20 outline-none">
                 </div>
-                <p id="adminLoginError" class="hidden text-xs font-semibold text-rose-600 bg-rose-50 border border-rose-200 rounded-lg px-3 py-2">
+                <p id="adminLoginError" class="hidden text-xs font-semibold text-rose-600 bg-rose-50 border border-rose-200 rounded-lg px-3 py-2" data-i18n="loginError">
                     Nama pengguna atau kata laluan tidak sah.
                 </p>
                 <div class="flex items-center justify-end gap-2 pt-1">
                     <button type="button" onclick="closeAdminLoginModal()"
-                        class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition">Batal</button>
+                        class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition" data-i18n="cancelBtn">Batal</button>
                     <button type="submit"
-                        class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-purple-700 hover:bg-purple-800 shadow-sm transition">Log Masuk</button>
+                        class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-purple-700 hover:bg-purple-800 shadow-sm transition" data-i18n="loginBtn">Log Masuk</button>
                 </div>
             </form>
         </div>
@@ -507,7 +592,7 @@
         <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-xl max-h-[90vh] flex flex-col overflow-hidden">
             <div class="px-5 py-4 bg-gradient-to-r from-indigo-900 to-purple-900 text-white flex items-center justify-between shrink-0">
                 <div>
-                    <h3 class="text-sm font-bold">Pembantu Key-In Portal DV3 USM</h3>
+                    <h3 class="text-sm font-bold" data-i18n="dv3ModalTitle">Pembantu Key-In Portal DV3 USM</h3>
                     <p id="dv3HelperSubtitle" class="text-[11px] text-indigo-200 mt-0.5">Salin setiap medan dengan 1 klik terus ke DV3</p>
                 </div>
                 <button type="button" onclick="closeDv3HelperModal()" class="text-indigo-200 hover:text-white text-sm font-bold">✕</button>
@@ -517,11 +602,11 @@
                 <!-- Butang Buka Portal DV3 -->
                 <div class="flex flex-wrap items-center gap-2 pb-3 border-b border-slate-100">
                     <button type="button" onclick="openDv3SideWindow()"
-                        class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-indigo-700 hover:bg-indigo-800 shadow-sm transition">
+                        class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-indigo-700 hover:bg-indigo-800 shadow-sm transition" data-i18n="openDv3Side">
                         Buka DV3 (Tetingkap Sebelah)
                     </button>
                     <a href="https://dv3.usm.my/" target="_blank" rel="noopener noreferrer"
-                        class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-indigo-800 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 transition">
+                        class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-indigo-800 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 transition" data-i18n="openDv3Tab">
                         Buka DV3 (Tab Baharu)
                     </a>
                 </div>
@@ -531,14 +616,14 @@
 
                 <!-- Simpan No. Rujukan DV3 Terus dari Modal -->
                 <div class="pt-3 border-t border-slate-200">
-                    <label for="dv3ModalRefInput" class="block text-xs font-bold text-slate-700 mb-1.5">
+                    <label for="dv3ModalRefInput" class="block text-xs font-bold text-slate-700 mb-1.5" data-i18n="saveDv3Label">
                         Simpan No. Rujukan / Tiket DV3 (Selepas Key-In)
                     </label>
                     <div class="flex items-center gap-2">
                         <input type="text" id="dv3ModalRefInput" placeholder="Contoh: DV3-2026-0142"
                             class="flex-1 rounded-xl border border-slate-300 px-3 py-2 text-xs sm:text-sm focus:border-indigo-600 outline-none">
                         <button type="button" onclick="saveDv3FromModal()"
-                            class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition">
+                            class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 transition" data-i18n="saveRefBtn">
                             Simpan Rujukan
                         </button>
                     </div>
@@ -551,10 +636,10 @@
     <div id="imageModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4 no-print">
         <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full overflow-hidden">
             <div class="px-4 py-3 border-b border-slate-200 flex items-center justify-between">
-                <h3 id="imageModalTitle" class="text-sm font-bold text-slate-800">Gambar Kerosakan</h3>
+                <h3 id="imageModalTitle" class="text-sm font-bold text-slate-800" data-i18n="imageModalTitle">Gambar Kerosakan</h3>
                 <div class="flex items-center gap-2">
                     <button type="button" id="modalDownloadImgBtn"
-                        class="px-3 py-1.5 rounded-lg text-xs font-semibold text-purple-800 bg-purple-50 hover:bg-purple-100 border border-purple-200 transition">
+                        class="px-3 py-1.5 rounded-lg text-xs font-semibold text-purple-800 bg-purple-50 hover:bg-purple-100 border border-purple-200 transition" data-i18n="downloadBtn">
                         Muat Turun
                     </button>
                     <button type="button" onclick="closeImageModal()" class="text-slate-500 hover:text-slate-900 text-sm font-bold px-2">✕</button>
@@ -569,15 +654,15 @@
     <!-- ==================== MODAL PENGESAHAN PADAM ==================== -->
     <div id="deleteModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 no-print">
         <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-sm p-5">
-            <h3 class="text-base font-bold text-slate-900">Padam Rekod Aduan?</h3>
+            <h3 class="text-base font-bold text-slate-900" data-i18n="deleteModalTitle">Padam Rekod Aduan?</h3>
             <p id="deleteModalText" class="text-xs sm:text-sm text-slate-600 mt-1.5">
                 Adakah anda pasti mahu memadam rekod ini? Tindakan ini tidak boleh dibatalkan.
             </p>
             <div class="flex items-center justify-end gap-2 mt-5">
                 <button type="button" onclick="closeDeleteModal()"
-                    class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition">Batal</button>
+                    class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition" data-i18n="cancelBtn">Batal</button>
                 <button type="button" id="confirmDeleteBtn"
-                    class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 shadow-sm transition">Ya, Padam</button>
+                    class="px-4 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 shadow-sm transition" data-i18n="confirmDeleteBtn">Ya, Padam</button>
             </div>
         </div>
     </div>
@@ -590,6 +675,8 @@
         // ==================== KONFIGURASI UTAMA ====================
         const STORAGE_KEY = 'ppsm_aduan_kerosakan_v2';
         const ADMIN_SESSION_KEY = 'ppsm_admin_logged_in';
+        const THEME_STORAGE_KEY = 'ppsm_theme_mode';
+        const LANG_STORAGE_KEY = 'ppsm_lang_code';
 
         // Tetapan Akaun Admin (Ubah di sini jika perlu)
         const ADMIN_USERNAME = 'admin';
@@ -601,6 +688,209 @@
         // URL Tetap Google Apps Script (Disambung automatik untuk semua pengguna & peranti)
         const DEFAULT_GAS_URL = 'https://script.google.com/macros/s/AKfycbzImrBev7Tc1pkS8o6cSI1NnyhVXMNXZREjWUUaOhkeditTxBeX6XWenVsDU_TY2fxYhg/exec';
 
+        // ==================== KAMUS DWI BAHASA (BM & EN) ====================
+        const I18N = {
+            ms: {
+                appTitle: 'Math QuickFix',
+                appSubtitle: 'Pusat Pengajian Sains Matematik, USM',
+                sheetActive: 'Google Sheets Aktif',
+                localMode: 'Mod Tempatan',
+                adminLogin: 'Log Masuk Admin',
+                logout: 'Log Keluar',
+                roleReporter: 'Mod Pengadu',
+                roleAdmin: 'Mod Admin',
+                formTitle: 'Borang Aduan Kerosakan',
+                formSubtitle: 'Lengkapkan maklumat di bawah untuk tindakan penyelenggaraan',
+                labelDateTime: 'Tarikh & Masa',
+                labelReporter: 'Nama Pengadu',
+                phReporter: 'Contoh: Dr. Ahmad / Pn. Siti',
+                labelCategory: 'Kategori Kerosakan',
+                labelLocation: 'Lokasi / Bilik',
+                phLocation: 'Contoh: Bilik C02, Makmal 3',
+                labelDescription: 'Butiran Aduan Kerosakan',
+                phDescription: 'Nyatakan kerosakan secara terperinci (contoh: Lampu siling berkelip-kelip dan tidak menyala di bahagian hadapan bilik)...',
+                labelImage: 'Muat Naik Gambar Kerosakan',
+                labelOptional: '(Pilihan)',
+                submitBtn: 'Hantar Aduan',
+                submittingBtn: 'Menghantar...',
+                submitSuccessTitle: 'Aduan Anda Telah Diterima!',
+                adminBannerBadge: 'Papan Pemuka Analitik Admin',
+                adminBannerTitle: 'Ringkasan Penyelenggaraan & Integrasi DV3',
+                adminBannerSub: 'Data dikemas kini secara automatik daripada Google Sheets',
+                pendingDv3Label: 'Belum Key-In DV3:',
+                kpiTotal: 'Jumlah',
+                kpiNew: 'Baru',
+                kpiInProgress: 'Tindakan',
+                kpiCompleted: 'Selesai',
+                analyticsResolution: 'Prestasi Penyelesaian',
+                liveTag: 'Langsung',
+                dv3ProgressLabel: 'Kemajuan Key-In DV3',
+                categoryBreakdown: 'Taburan Kategori Kerosakan',
+                clickToFilter: 'Klik kategori untuk tapis',
+                recordsTitle: 'Rekod Aduan',
+                viewCards: 'Kad',
+                viewTable: 'Jadual',
+                printBtn: 'Cetak',
+                phSearch: 'Cari ID, nama, lokasi, DV3...',
+                allCategories: 'Semua Kategori',
+                allStatuses: 'Semua Status',
+                dv3All: 'DV3: Semua',
+                dv3Pending: 'Belum DV3',
+                dv3Done: 'Sudah DV3',
+                thIdDate: 'ID & Tarikh',
+                thReporterLoc: 'Pengadu & Lokasi',
+                thCatDesc: 'Kategori & Kerosakan',
+                thStatus: 'Status',
+                thDv3Action: 'DV3 & Tindakan',
+                emptyTitle: 'Tiada Rekod Aduan',
+                emptyNoMatch: 'Tiada aduan yang sepadan dengan carian atau penapis yang dipilih.',
+                emptyDefault: 'Belum ada aduan kerosakan direkodkan buat masa ini.',
+                footerText: 'Math QuickFix — Pusat Pengajian Sains Matematik (PPSM), USM.',
+                modalLoginTitle: 'Log Masuk Admin PPSM',
+                usernameLabel: 'Nama Pengguna',
+                passwordLabel: 'Kata Laluan',
+                loginError: 'Nama pengguna atau kata laluan tidak sah.',
+                cancelBtn: 'Batal',
+                loginBtn: 'Log Masuk',
+                dv3ModalTitle: 'Pembantu Key-In Portal DV3 USM',
+                openDv3Side: 'Buka DV3 (Tetingkap Sebelah)',
+                openDv3Tab: 'Buka DV3 (Tab Baharu)',
+                saveDv3Label: 'Simpan No. Rujukan / Tiket DV3 (Selepas Key-In)',
+                phDv3Ref: 'Contoh: DV3-2026-0142',
+                saveRefBtn: 'Simpan Rujukan',
+                imageModalTitle: 'Gambar Kerosakan',
+                downloadBtn: 'Muat Turun',
+                deleteModalTitle: 'Padam Rekod Aduan?',
+                confirmDeleteBtn: 'Ya, Padam',
+                cardReporter: 'Pengadu:',
+                cardLocation: 'Lokasi:',
+                cardStatus: 'Status:',
+                dv3HelperBtn: 'Pembantu Key-In DV3',
+                dv3ShortBtn: 'Key-In DV3',
+                downloadImgBtn: 'Muat Turun Gambar',
+                viewImgBtn: 'Lihat Gambar',
+                saveBtn: 'Simpan',
+                deleteBtn: 'Padam',
+                copyBtn: 'Salin',
+                copiedBtn: '✓ Disalin',
+                phDv3Short: 'No. Rujukan DV3',
+                donutSub: (done, total) => `${done} daripada ${total} aduan telah diselesaikan.`,
+                lastSyncAt: (time) => `Dikemas kini daripada Google Sheets pada ${time}`,
+                toastWelcome: 'Selamat datang, Admin PPSM!',
+                toastLogout: 'Anda telah log keluar daripada Mod Admin.',
+                toastSubmitted: 'Aduan berjaya dihantar ke Google Sheets!',
+                toastSubmittedLocal: 'Aduan disimpan secara tempatan.',
+                toastCopied: 'Disalin ke clipboard. Tekan Ctrl+V pada portal DV3.'
+            },
+            en: {
+                appTitle: 'Math QuickFix',
+                appSubtitle: 'School of Mathematical Sciences, USM',
+                sheetActive: 'Google Sheets Active',
+                localMode: 'Local Mode',
+                adminLogin: 'Admin Login',
+                logout: 'Logout',
+                roleReporter: 'Reporter Mode',
+                roleAdmin: 'Admin Mode',
+                formTitle: 'Maintenance & Fault Report Form',
+                formSubtitle: 'Complete the details below to submit a maintenance request',
+                labelDateTime: 'Date & Time',
+                labelReporter: 'Reporter Name',
+                phReporter: 'e.g.: Dr. Ahmad / Ms. Siti',
+                labelCategory: 'Fault Category',
+                labelLocation: 'Location / Room',
+                phLocation: 'e.g.: Room C02, Lab 3',
+                labelDescription: 'Fault Description',
+                phDescription: 'Describe the issue in detail (e.g., Ceiling light is flickering and not turning on at the front of the room)...',
+                labelImage: 'Upload Photo of Fault',
+                labelOptional: '(Optional)',
+                submitBtn: 'Submit Report',
+                submittingBtn: 'Submitting...',
+                submitSuccessTitle: 'Your Report Has Been Received!',
+                adminBannerBadge: 'Admin Analytics Dashboard',
+                adminBannerTitle: 'Maintenance Overview & DV3 Integration',
+                adminBannerSub: 'Data synced automatically from Google Sheets',
+                pendingDv3Label: 'Pending DV3 Key-In:',
+                kpiTotal: 'Total',
+                kpiNew: 'New',
+                kpiInProgress: 'In Progress',
+                kpiCompleted: 'Completed',
+                analyticsResolution: 'Resolution Rate',
+                liveTag: 'Live',
+                dv3ProgressLabel: 'DV3 Key-In Progress',
+                categoryBreakdown: 'Fault Category Breakdown',
+                clickToFilter: 'Click category to filter',
+                recordsTitle: 'Fault Reports',
+                viewCards: 'Cards',
+                viewTable: 'Table',
+                printBtn: 'Print',
+                phSearch: 'Search ID, name, location, DV3...',
+                allCategories: 'All Categories',
+                allStatuses: 'All Statuses',
+                dv3All: 'DV3: All',
+                dv3Pending: 'Pending DV3',
+                dv3Done: 'DV3 Logged',
+                thIdDate: 'ID & Date',
+                thReporterLoc: 'Reporter & Location',
+                thCatDesc: 'Category & Issue',
+                thStatus: 'Status',
+                thDv3Action: 'DV3 & Actions',
+                emptyTitle: 'No Reports Found',
+                emptyNoMatch: 'No reports match your current search or filter criteria.',
+                emptyDefault: 'No maintenance reports have been submitted yet.',
+                footerText: 'Math QuickFix — School of Mathematical Sciences (PPSM), USM.',
+                modalLoginTitle: 'PPSM Admin Login',
+                usernameLabel: 'Username',
+                passwordLabel: 'Password',
+                loginError: 'Invalid username or password.',
+                cancelBtn: 'Cancel',
+                loginBtn: 'Sign In',
+                dv3ModalTitle: 'USM DV3 Portal Key-In Helper',
+                openDv3Side: 'Open DV3 (Side Window)',
+                openDv3Tab: 'Open DV3 (New Tab)',
+                saveDv3Label: 'Save DV3 Reference / Ticket No. (After Key-In)',
+                phDv3Ref: 'e.g.: DV3-2026-0142',
+                saveRefBtn: 'Save Reference',
+                imageModalTitle: 'Fault Photo',
+                downloadBtn: 'Download',
+                deleteModalTitle: 'Delete Report Record?',
+                confirmDeleteBtn: 'Yes, Delete',
+                cardReporter: 'Reporter:',
+                cardLocation: 'Location:',
+                cardStatus: 'Status:',
+                dv3HelperBtn: 'DV3 Key-In Helper',
+                dv3ShortBtn: 'DV3 Key-In',
+                downloadImgBtn: 'Download Photo',
+                viewImgBtn: 'View Photo',
+                saveBtn: 'Save',
+                deleteBtn: 'Delete',
+                copyBtn: 'Copy',
+                copiedBtn: '✓ Copied',
+                phDv3Short: 'DV3 Ref No.',
+                donutSub: (done, total) => `${done} of ${total} reports have been resolved.`,
+                lastSyncAt: (time) => `Synced from Google Sheets at ${time}`,
+                toastWelcome: 'Welcome back, PPSM Admin!',
+                toastLogout: 'You have signed out of Admin Mode.',
+                toastSubmitted: 'Report successfully submitted to Google Sheets!',
+                toastSubmittedLocal: 'Report saved locally.',
+                toastCopied: 'Copied to clipboard. Press Ctrl+V in DV3 portal.'
+            }
+        };
+
+        const CATEGORY_LABELS = {
+            'Elektrik & Lampu': { ms: 'Elektrik & Lampu', en: 'Electrical & Lighting' },
+            'Penghawa Dingin': { ms: 'Penghawa Dingin', en: 'Air Conditioning' },
+            'Perabot & Kelengkapan': { ms: 'Perabot & Kelengkapan', en: 'Furniture & Fixtures' },
+            'Paip & Sanitari': { ms: 'Paip & Sanitari', en: 'Plumbing & Sanitary' },
+            'Bangunan & Awam': { ms: 'Bangunan & Awam', en: 'Building & Civil' },
+            'Lain-lain': { ms: 'Lain-lain', en: 'Others' }
+        };
+
+        const STATUS_LABELS = {
+            'Baru': { ms: 'Baru', en: 'New' },
+            'Dalam Tindakan': { ms: 'Dalam Tindakan', en: 'In Progress' },
+            'Selesai': { ms: 'Selesai', en: 'Completed' }
+        };
+
         // ==================== PEMBOLEH UBAH KEADAAN ====================
         let reports = [];
         let selectedImageBase64 = '';
@@ -609,6 +899,8 @@
         let dv3HelperFieldValues = {};
         let isAdminLoggedIn = false;
         let currentViewMode = 'cards';
+        let currentLang = 'ms';
+        let isDarkMode = false;
 
         // ==================== RUJUKAN ELEMEN DOM ====================
         const mainLayoutGrid = document.getElementById('mainLayoutGrid');
@@ -664,6 +956,83 @@
         const emptyState = document.getElementById('emptyState');
         const emptyStateSubtext = document.getElementById('emptyStateSubtext');
 
+        // ==================== FUNGSI DWI BAHASA & MOD GELAP ====================
+        function t(key) {
+            const pack = I18N[currentLang] || I18N.ms;
+            return pack[key] !== undefined ? pack[key] : (I18N.ms[key] || key);
+        }
+
+        function translateCategory(cat) {
+            const entry = CATEGORY_LABELS[cat];
+            return entry ? (entry[currentLang] || cat) : cat;
+        }
+
+        function translateStatus(stat) {
+            const entry = STATUS_LABELS[stat];
+            return entry ? (entry[currentLang] || stat) : stat;
+        }
+
+        function applyDarkMode() {
+            const htmlEl = document.documentElement;
+            const moonIcon = document.getElementById('darkIconMoon');
+            const sunIcon = document.getElementById('darkIconSun');
+            if (isDarkMode) {
+                htmlEl.classList.add('dark');
+                if (moonIcon) moonIcon.classList.add('hidden');
+                if (sunIcon) sunIcon.classList.remove('hidden');
+            } else {
+                htmlEl.classList.remove('dark');
+                if (moonIcon) moonIcon.classList.remove('hidden');
+                if (sunIcon) sunIcon.classList.add('hidden');
+            }
+        }
+
+        function toggleDarkMode() {
+            isDarkMode = !isDarkMode;
+            localStorage.setItem(THEME_STORAGE_KEY, isDarkMode ? 'dark' : 'light');
+            applyDarkMode();
+        }
+
+        function applyLanguage() {
+            document.documentElement.lang = currentLang;
+            document.getElementById('appTitleText').textContent = t('appTitle');
+            document.getElementById('appSubtitleText').textContent = t('appSubtitle');
+            document.getElementById('langToggleLabel').textContent = currentLang === 'ms' ? 'BM | EN' : 'EN | BM';
+
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                const val = t(key);
+                if (typeof val === 'string') el.textContent = val;
+            });
+
+            document.querySelectorAll('[data-cat-opt]').forEach(opt => {
+                opt.textContent = translateCategory(opt.getAttribute('data-cat-opt'));
+            });
+
+            document.querySelectorAll('[data-stat-opt]').forEach(opt => {
+                opt.textContent = translateStatus(opt.getAttribute('data-stat-opt'));
+            });
+
+            reporterNameInput.placeholder = t('phReporter');
+            locationInput.placeholder = t('phLocation');
+            descriptionInput.placeholder = t('phDescription');
+            searchInput.placeholder = t('phSearch');
+            const dv3ModalInput = document.getElementById('dv3ModalRefInput');
+            if (dv3ModalInput) dv3ModalInput.placeholder = t('phDv3Ref');
+
+            roleBadge.textContent = isAdminLoggedIn ? t('roleAdmin') : t('roleReporter');
+            updateConnectionBadge();
+            if (isAdminLoggedIn) {
+                renderDashboard();
+            }
+        }
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'ms' ? 'en' : 'ms';
+            localStorage.setItem(LANG_STORAGE_KEY, currentLang);
+            applyLanguage();
+        }
+
         // ==================== FUNGSI BANTUAN UMUM ====================
         function escapeHTML(str) {
             return String(str || '')
@@ -682,10 +1051,10 @@
             const url = getGasUrl();
             if (url) {
                 sheetStatusDot.className = 'w-2 h-2 rounded-full bg-emerald-400';
-                sheetStatusLabel.textContent = 'Google Sheets Aktif';
+                sheetStatusLabel.textContent = t('sheetActive');
             } else {
                 sheetStatusDot.className = 'w-2 h-2 rounded-full bg-amber-400';
-                sheetStatusLabel.textContent = 'Mod Tempatan';
+                sheetStatusLabel.textContent = t('localMode');
             }
         }
 
@@ -756,7 +1125,7 @@
                 adminDashboardSection.classList.remove('hidden');
                 adminLoginNavBtn.classList.add('hidden');
                 adminLogoutNavBtn.classList.remove('hidden');
-                roleBadge.textContent = 'Mod Admin';
+                roleBadge.textContent = t('roleAdmin');
                 roleBadge.className = 'px-2.5 py-1 rounded-full text-[11px] font-bold bg-indigo-100 text-indigo-800 border border-indigo-200';
                 renderDashboard();
                 if (getGasUrl()) {
@@ -768,7 +1137,7 @@
                 adminDashboardSection.classList.add('hidden');
                 adminLoginNavBtn.classList.remove('hidden');
                 adminLogoutNavBtn.classList.add('hidden');
-                roleBadge.textContent = 'Mod Pengadu';
+                roleBadge.textContent = t('roleReporter');
                 roleBadge.className = 'px-2.5 py-1 rounded-full text-[11px] font-bold bg-purple-100 text-purple-800 border border-purple-200';
             }
         }
@@ -794,7 +1163,7 @@
                 sessionStorage.setItem(ADMIN_SESSION_KEY, '1');
                 closeAdminLoginModal();
                 applyRoleView();
-                showToast('Selamat datang, Admin PPSM!', 'success');
+                showToast(t('toastWelcome'), 'success');
             } else {
                 document.getElementById('adminLoginError').classList.remove('hidden');
             }
@@ -804,7 +1173,7 @@
             isAdminLoggedIn = false;
             sessionStorage.removeItem(ADMIN_SESSION_KEY);
             applyRoleView();
-            showToast('Anda telah log keluar daripada Mod Admin.', 'info');
+            showToast(t('toastLogout'), 'info');
         }
 
         // ==================== SAMBUNGAN GOOGLE SHEETS ====================
@@ -895,7 +1264,7 @@
 
                 if (lastSyncBadge) {
                     const nowTime = new Date().toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-                    lastSyncBadge.textContent = `Dikemas kini daripada Google Sheets pada ${nowTime}`;
+                    lastSyncBadge.textContent = t('lastSyncAt')(nowTime);
                 }
                 if (!silent) {
                     showToast(`Berjaya menarik ${remoteReports.length} rekod dari Google Sheets.`, 'success');
@@ -967,7 +1336,7 @@
             }
 
             submitBtn.disabled = true;
-            submitBtnText.textContent = 'Menghantar...';
+            submitBtnText.textContent = t('submittingBtn');
 
             const newReport = {
                 id: generateReportId(),
@@ -1003,16 +1372,20 @@
             updateLiveDateTime();
 
             // Papar pengesahan
-            submitSuccessDetail.textContent = `No. Rujukan: ${newReport.id} • ${newReport.synced ? 'Disimpan ke Google Sheets & e-mel admin dihantar.' : 'Disimpan secara tempatan.'}`;
+            const refLabel = currentLang === 'ms' ? 'No. Rujukan' : 'Ref No.';
+            const syncMsg = newReport.synced
+                ? (currentLang === 'ms' ? 'Disimpan ke Google Sheets & e-mel admin dihantar.' : 'Saved to Google Sheets & admin notified via email.')
+                : (currentLang === 'ms' ? 'Disimpan secara tempatan.' : 'Saved locally.');
+            submitSuccessDetail.textContent = `${refLabel}: ${newReport.id} • ${syncMsg}`;
             submitSuccessBanner.classList.remove('hidden');
 
             if (isAdminLoggedIn) {
                 renderDashboard();
             }
 
-            showToast(newReport.synced ? 'Aduan berjaya dihantar ke Google Sheets!' : 'Aduan disimpan secara tempatan.', 'success');
+            showToast(newReport.synced ? t('toastSubmitted') : t('toastSubmittedLocal'), 'success');
             submitBtn.disabled = false;
-            submitBtnText.textContent = 'Hantar Aduan';
+            submitBtnText.textContent = t('submitBtn');
         });
 
         // ==================== PAPARAN STATISTIK, ANALITIK & SENARAI ====================
@@ -1076,7 +1449,7 @@
             const offset = circumference * (1 - selesaiPct / 100);
             if (donutProgressCircle) donutProgressCircle.style.strokeDashoffset = offset;
             if (donutPercentText) donutPercentText.textContent = `${selesaiPct}%`;
-            if (donutSubText) donutSubText.textContent = `${selesai} daripada ${total} aduan telah diselesaikan.`;
+            if (donutSubText) donutSubText.textContent = t('donutSub')(selesai, total);
 
             // Bar Kemajuan DV3
             const dv3Pct = pct(dv3Done);
@@ -1102,7 +1475,7 @@
                         <button type="button" onclick="quickFilterCategory('${c.name}')"
                             class="w-full text-left group rounded-lg px-2 py-1 transition ${isSelected ? 'bg-purple-50 ring-1 ring-purple-300' : 'hover:bg-slate-50'}">
                             <div class="flex items-center justify-between text-[11px] mb-1">
-                                <span class="font-semibold text-slate-700 group-hover:text-purple-800 truncate pr-2">${escapeHTML(c.name)}</span>
+                                <span class="font-semibold text-slate-700 group-hover:text-purple-800 truncate pr-2">${escapeHTML(translateCategory(c.name))}</span>
                                 <span class="font-bold text-slate-500 shrink-0">${count} <span class="font-normal text-slate-400">(${barPct}%)</span></span>
                             </div>
                             <div class="w-full h-1.5 rounded-full bg-slate-100 overflow-hidden">
@@ -1178,9 +1551,7 @@
                 reportsContainer.classList.add('hidden');
                 reportsTableWrapper.classList.add('hidden');
                 emptyState.classList.remove('hidden');
-                emptyStateSubtext.textContent = reports.length > 0
-                    ? 'Tiada aduan yang sepadan dengan carian atau penapis yang dipilih.'
-                    : 'Belum ada aduan kerosakan direkodkan buat masa ini.';
+                emptyStateSubtext.textContent = reports.length > 0 ? t('emptyNoMatch') : t('emptyDefault');
                 return;
             }
 
@@ -1195,8 +1566,8 @@
                     const safeId = escapeHTML(report.id);
                     const safeDate = escapeHTML(report.dateTime);
                     const safeName = escapeHTML(report.reporterName);
-                    const safeCat = escapeHTML(report.category || 'Lain-lain');
-                    const safeLoc = escapeHTML(report.location || 'Tidak dinyatakan');
+                    const safeCat = escapeHTML(translateCategory(report.category || 'Lain-lain'));
+                    const safeLoc = escapeHTML(report.location || '-');
                     const safeDesc = escapeHTML(report.description);
                     const safeDv3Ref = escapeHTML(report.dv3Ref || '');
                     const catBadgeClass = getCategoryBadgeClasses(report.category);
@@ -1216,14 +1587,14 @@
                         <td class="py-3 px-3.5 align-top max-w-xs">
                             <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold border ${catBadgeClass} mb-1">${safeCat}</span>
                             <p class="text-xs text-slate-700">${safeDesc}</p>
-                            ${displayImgUrl ? `<button type="button" onclick="openImageModal('${safeId}')" class="mt-1 text-[11px] font-semibold text-purple-700 hover:underline">Lihat Gambar</button>` : ''}
+                            ${displayImgUrl ? `<button type="button" onclick="openImageModal('${safeId}')" class="mt-1 text-[11px] font-semibold text-purple-700 hover:underline">${t('viewImgBtn')}</button>` : ''}
                         </td>
                         <td class="py-3 px-3.5 align-top whitespace-nowrap">
                             <select onchange="updateReportStatus('${safeId}', this.value)"
                                 class="rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 focus:border-purple-600 outline-none">
-                                <option value="Baru" ${report.status === 'Baru' ? 'selected' : ''}>Baru</option>
-                                <option value="Dalam Tindakan" ${report.status === 'Dalam Tindakan' ? 'selected' : ''}>Dalam Tindakan</option>
-                                <option value="Selesai" ${report.status === 'Selesai' ? 'selected' : ''}>Selesai</option>
+                                <option value="Baru" ${report.status === 'Baru' ? 'selected' : ''}>${translateStatus('Baru')}</option>
+                                <option value="Dalam Tindakan" ${report.status === 'Dalam Tindakan' ? 'selected' : ''}>${translateStatus('Dalam Tindakan')}</option>
+                                <option value="Selesai" ${report.status === 'Selesai' ? 'selected' : ''}>${translateStatus('Selesai')}</option>
                             </select>
                             ${safeDv3Ref ? `<div class="mt-1.5"><span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-100 text-indigo-800">DV3: ${safeDv3Ref}</span></div>` : ''}
                         </td>
@@ -1231,10 +1602,10 @@
                             <div class="flex items-center gap-1.5">
                                 <button type="button" onclick="openDv3HelperModal('${safeId}')"
                                     class="px-2.5 py-1 rounded-lg text-xs font-semibold text-white bg-indigo-700 hover:bg-indigo-800 transition">
-                                    Key-In DV3
+                                    ${t('dv3ShortBtn')}
                                 </button>
                                 <button type="button" onclick="openDeleteModal('${safeId}')"
-                                    class="p-1.5 rounded-lg text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition" title="Padam">
+                                    class="p-1.5 rounded-lg text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition" title="${t('deleteBtn')}">
                                     ✕
                                 </button>
                             </div>
@@ -1253,8 +1624,8 @@
                 const safeId = escapeHTML(report.id);
                 const safeDate = escapeHTML(report.dateTime);
                 const safeName = escapeHTML(report.reporterName);
-                const safeCat = escapeHTML(report.category || 'Lain-lain');
-                const safeLoc = escapeHTML(report.location || 'Tidak dinyatakan');
+                const safeCat = escapeHTML(translateCategory(report.category || 'Lain-lain'));
+                const safeLoc = escapeHTML(report.location || '-');
                 const safeDesc = escapeHTML(report.description);
                 const safeDv3Ref = escapeHTML(report.dv3Ref || '');
                 const catBadgeClass = getCategoryBadgeClasses(report.category);
@@ -1266,7 +1637,7 @@
                         <button type="button" onclick="openImageModal('${safeId}')"
                             class="block w-24 h-24 rounded-xl overflow-hidden border border-slate-200 hover:ring-2 hover:ring-purple-500 transition bg-slate-100">
                             <img src="${displayImgUrl}" alt="Gambar kerosakan" class="w-full h-full object-cover"
-                                onerror="this.src='https://placehold.co/200x200/e2e8f0/475569?text=Gambar'">
+                                onerror="this.src='https://placehold.co/200x200/e2e8f0/475569?text=Photo'">
                         </button>
                     </div>
                 ` : '';
@@ -1289,8 +1660,8 @@
                         <div class="flex flex-col sm:flex-row gap-4">
                             <div class="flex-1 min-w-0 space-y-1.5">
                                 <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-600">
-                                    <span><strong class="text-slate-800">Pengadu:</strong> ${safeName}</span>
-                                    <span><strong class="text-slate-800">Lokasi:</strong> ${safeLoc}</span>
+                                    <span><strong class="text-slate-800">${t('cardReporter')}</strong> ${safeName}</span>
+                                    <span><strong class="text-slate-800">${t('cardLocation')}</strong> ${safeLoc}</span>
                                 </div>
                                 <p class="text-sm text-slate-800 leading-relaxed whitespace-pre-line bg-slate-50 rounded-xl p-3 border border-slate-100">${safeDesc}</p>
                             </div>
@@ -1302,23 +1673,23 @@
                             <div class="flex flex-wrap items-center gap-2">
                                 <button type="button" onclick="openDv3HelperModal('${safeId}')"
                                     class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-indigo-700 hover:bg-indigo-800 shadow-sm transition">
-                                    Pembantu Key-In DV3
+                                    ${t('dv3HelperBtn')}
                                 </button>
                                 ${displayImgUrl ? `
                                     <button type="button" onclick="downloadReportImage('${safeId}')"
                                         class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 transition">
-                                        Muat Turun Gambar
+                                        ${t('downloadImgBtn')}
                                     </button>
                                 ` : ''}
                             </div>
 
                             <!-- Input Pantas No. Rujukan DV3 -->
                             <div class="flex items-center gap-1.5">
-                                <input type="text" id="dv3Input_${safeId}" value="${safeDv3Ref}" placeholder="No. Rujukan DV3"
+                                <input type="text" id="dv3Input_${safeId}" value="${safeDv3Ref}" placeholder="${t('phDv3Short')}"
                                     class="w-36 sm:w-40 rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs focus:border-indigo-600 outline-none">
                                 <button type="button" onclick="saveDv3Reference('${safeId}')"
                                     class="px-2.5 py-1.5 rounded-lg text-xs font-bold text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition">
-                                    Simpan
+                                    ${t('saveBtn')}
                                 </button>
                             </div>
                         </div>
@@ -1326,18 +1697,18 @@
                         <!-- Baris Bawah: Status & Padam -->
                         <div class="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 no-print">
                             <div class="flex items-center gap-2">
-                                <label class="text-xs font-semibold text-slate-500">Status:</label>
+                                <label class="text-xs font-semibold text-slate-500">${t('cardStatus')}</label>
                                 <select onchange="updateReportStatus('${safeId}', this.value)"
                                     class="rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-800 focus:border-purple-600 outline-none">
-                                    <option value="Baru" ${report.status === 'Baru' ? 'selected' : ''}>Baru</option>
-                                    <option value="Dalam Tindakan" ${report.status === 'Dalam Tindakan' ? 'selected' : ''}>Dalam Tindakan</option>
-                                    <option value="Selesai" ${report.status === 'Selesai' ? 'selected' : ''}>Selesai</option>
+                                    <option value="Baru" ${report.status === 'Baru' ? 'selected' : ''}>${translateStatus('Baru')}</option>
+                                    <option value="Dalam Tindakan" ${report.status === 'Dalam Tindakan' ? 'selected' : ''}>${translateStatus('Dalam Tindakan')}</option>
+                                    <option value="Selesai" ${report.status === 'Selesai' ? 'selected' : ''}>${translateStatus('Selesai')}</option>
                                 </select>
                             </div>
 
                             <button type="button" onclick="openDeleteModal('${safeId}')"
                                 class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold text-rose-600 hover:bg-rose-50 transition">
-                                Padam
+                                ${t('deleteBtn')}
                             </button>
                         </div>
                     </div>
@@ -1466,16 +1837,17 @@
                 `Kerosakan: ${report.description}` +
                 (report.imageUrl ? `\nGambar: ${report.imageUrl}` : '');
 
+            const isEn = currentLang === 'en';
             const fields = [
-                { key: 'title', label: 'Tajuk Ringkas', value: shortTitle },
-                { key: 'location', label: 'Lokasi / Bilik', value: report.location || '-' },
-                { key: 'category', label: 'Kategori Kerosakan', value: report.category || '-' },
-                { key: 'reporter', label: 'Nama Pengadu', value: report.reporterName || '-' },
-                { key: 'desc', label: 'Butiran Kerosakan', value: report.description || '-' },
-                { key: 'full', label: 'Butiran Lengkap (Gabungan)', value: fullSummary }
+                { key: 'title', label: isEn ? 'Short Title' : 'Tajuk Ringkas', value: shortTitle },
+                { key: 'location', label: isEn ? 'Location / Room' : 'Lokasi / Bilik', value: report.location || '-' },
+                { key: 'category', label: isEn ? 'Fault Category' : 'Kategori Kerosakan', value: report.category || '-' },
+                { key: 'reporter', label: isEn ? 'Reporter Name' : 'Nama Pengadu', value: report.reporterName || '-' },
+                { key: 'desc', label: isEn ? 'Fault Details' : 'Butiran Kerosakan', value: report.description || '-' },
+                { key: 'full', label: isEn ? 'Full Summary (Combined)' : 'Butiran Lengkap (Gabungan)', value: fullSummary }
             ];
             if (report.imageUrl) {
-                fields.push({ key: 'image', label: 'Pautan Gambar Drive', value: report.imageUrl });
+                fields.push({ key: 'image', label: isEn ? 'Google Drive Photo Link' : 'Pautan Gambar Drive', value: report.imageUrl });
             }
 
             dv3HelperFieldValues = {};
@@ -1490,13 +1862,13 @@
                         </div>
                         <button type="button" id="dv3CopyBtn_${f.key}" onclick="copyDv3Field('${f.key}')"
                             class="shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold text-indigo-800 bg-indigo-100 hover:bg-indigo-200 transition">
-                            Salin
+                            ${t('copyBtn')}
                         </button>
                     </div>
                 `;
             }).join('');
 
-            document.getElementById('dv3HelperSubtitle').textContent = `Aduan ${report.id} • ${report.location}`;
+            document.getElementById('dv3HelperSubtitle').textContent = `${report.id} • ${report.location}`;
             document.getElementById('dv3ModalRefInput').value = report.dv3Ref || '';
             document.getElementById('dv3HelperModal').classList.remove('hidden');
         }
@@ -1511,11 +1883,11 @@
             const ok = copyToClipboardSafe(val);
             const btn = document.getElementById(`dv3CopyBtn_${key}`);
             if (ok && btn) {
-                btn.textContent = '✓ Disalin';
+                btn.textContent = t('copiedBtn');
                 btn.className = 'shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold text-emerald-800 bg-emerald-100 border border-emerald-200 transition';
-                showToast('Disalin ke clipboard. Tekan Ctrl+V pada portal DV3.', 'success');
+                showToast(t('toastCopied'), 'success');
             } else {
-                showToast('Gagal menyalin teks secara automatik.', 'warning');
+                showToast(currentLang === 'en' ? 'Failed to copy text automatically.' : 'Gagal menyalin teks secara automatik.', 'warning');
             }
         }
 
@@ -1581,12 +1953,20 @@
         // ==================== PERMULAAN APLIKASI ====================
         function initApp() {
             document.getElementById('footerYear').textContent = new Date().getFullYear();
+
+            // Muatkan pilihan Mod Gelap & Bahasa tersimpan
+            isDarkMode = localStorage.getItem(THEME_STORAGE_KEY) === 'dark';
+            applyDarkMode();
+
+            const savedLang = localStorage.getItem(LANG_STORAGE_KEY);
+            currentLang = savedLang === 'en' ? 'en' : 'ms';
+
             updateLiveDateTime();
             setInterval(updateLiveDateTime, 1000);
             loadReportsFromStorage();
-            updateConnectionBadge();
 
             isAdminLoggedIn = sessionStorage.getItem(ADMIN_SESSION_KEY) === '1';
+            applyLanguage();
             applyRoleView();
         }
 
